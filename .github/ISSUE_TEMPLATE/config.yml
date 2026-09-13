@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/RobertAgterhuis/speckit-azure-interview/security/advisories/new
+    about: Report vulnerabilities privately
+  - name: Spec Kit Core issues
+    url: https://github.com/github/spec-kit/issues
+    about: Report problems belonging to Spec Kit Core upstream

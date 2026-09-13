@@ -1,0 +1,278 @@
+{
+  "schemaVersion": "1.0",
+  "interview": {
+    "status": "complete",
+    "createdAt": "2026-09-13T08:00:00Z",
+    "updatedAt": "2026-09-13T09:00:00Z",
+    "interviewedBy": "Azure Platform Engineer",
+    "confirmedBy": "Workload Owner"
+  },
+  "workload": {
+    "name": "Example Workload",
+    "purpose": "Provide a secure internal application platform.",
+    "businessOwner": "Business Team",
+    "technicalOwner": "Workload Team",
+    "lifecycle": "brownfield",
+    "iacLanguage": "bicep",
+    "avmStrategy": "avm-preferred",
+    "environments": [
+      "dev",
+      "tst",
+      "acc",
+      "prd"
+    ],
+    "criticality": "high",
+    "deliveryDate": null
+  },
+  "scope": {
+    "inScope": [
+      "Deploy workload resources into a new spoke virtual network.",
+      "Integrate with existing central platform services."
+    ],
+    "outOfScope": [
+      "Modification of the existing hub virtual network.",
+      "Modification of the central Azure Firewall policy."
+    ],
+    "successCriteria": [
+      "The workload is reachable through approved private connectivity.",
+      "All required diagnostics are sent to the central workspace."
+    ]
+  },
+  "azureEstate": {
+    "tenantId": "00000000-0000-0000-0000-000000000001",
+    "managementGroupId": "mg-platform",
+    "subscriptions": [
+      {
+        "environment": "prd",
+        "subscriptionId": "00000000-0000-0000-0000-000000000002"
+      }
+    ],
+    "resourceGroupStrategy": "Separate resource groups by lifecycle and responsibility.",
+    "regions": [
+      "westeurope"
+    ],
+    "dataResidencyRequirements": [
+      "Workload data must remain within the European Union."
+    ],
+    "existingLandingZone": "yes"
+  },
+  "network": {
+    "topology": "existing-hub-spoke",
+    "hubResourceId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg-hub-we-prd/providers/Microsoft.Network/virtualNetworks/vnet-hub-we-prd",
+    "hubOwner": "Platform Team",
+    "spokeResourceId": null,
+    "addressSpaces": [
+      "10.20.0.0/24"
+    ],
+    "subnets": [
+      {
+        "name": "snet-application",
+        "prefix": "10.20.0.0/26",
+        "purpose": "Application hosting"
+      },
+      {
+        "name": "snet-private-endpoints",
+        "prefix": "10.20.0.64/27",
+        "purpose": "Private endpoints"
+      }
+    ],
+    "peeringOwner": "Platform Team",
+    "ingressPath": "Private traffic through the hub.",
+    "egressPath": "Central Azure Firewall in the hub.",
+    "firewallResourceId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg-hub-we-prd/providers/Microsoft.Network/azureFirewalls/afw-hub-we-prd",
+    "routeTableResourceIds": [],
+    "onPremisesConnectivity": "vpn",
+    "overlapValidationCompleted": true
+  },
+  "privateConnectivity": {
+    "privateEndpointsRequired": true,
+    "publicNetworkAccess": "disabled",
+    "privateEndpointSubnetId": null,
+    "dnsOwnership": "central-platform",
+    "existingPrivateDnsZones": [
+      "privatelink.vaultcore.azure.net"
+    ],
+    "vnetLinkOwner": "Platform Team",
+    "privateDnsResolverResourceId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg-dns-we-prd/providers/Microsoft.Network/dnsResolvers/pdnsr-hub-we-prd",
+    "onPremisesDnsIntegration": "Conditional forwarding through Azure Private DNS Resolver.",
+    "permittedDnsChanges": [
+      "Create a private DNS zone group on a workload-owned private endpoint."
+    ]
+  },
+  "existingResources": [
+    {
+      "resourceType": "Microsoft.OperationalInsights/workspaces",
+      "resourceName": "log-hub-we-prd",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg-monitoring-we-prd/providers/Microsoft.OperationalInsights/workspaces/log-hub-we-prd",
+      "intent": "reuse",
+      "owner": "Platform Team",
+      "modifiable": false,
+      "requiredIntegrations": [
+        "Diagnostic settings"
+      ]
+    },
+    {
+      "resourceType": "Microsoft.KeyVault/vaults",
+      "resourceName": "kv-example-we-prd",
+      "resourceId": null,
+      "intent": "create",
+      "owner": "Workload Team",
+      "modifiable": true,
+      "requiredIntegrations": [
+        "Private endpoint",
+        "Private DNS",
+        "Azure RBAC",
+        "Diagnostic settings"
+      ]
+    }
+  ],
+  "identity": {
+    "deploymentIdentity": "Azure DevOps workload identity federation",
+    "authenticationModel": "Microsoft Entra ID",
+    "managedIdentities": [
+      "User-assigned managed identity for the workload"
+    ],
+    "rbacModel": "Azure RBAC with least privilege.",
+    "roleAssignmentOwner": "Platform Team",
+    "entraGroups": [
+      "Workload administrators"
+    ],
+    "administrativeUnitRequirements": [],
+    "crossTenantRequirements": []
+  },
+  "security": {
+    "complianceFrameworks": [
+      "ISO 27001"
+    ],
+    "policyRequirements": [
+      "Comply with inherited landing-zone Azure Policy assignments."
+    ],
+    "securityBaseline": "Organizational Azure security baseline.",
+    "encryptionRequirements": [
+      "Encryption at rest using platform-managed keys.",
+      "TLS 1.2 or later for data in transit."
+    ],
+    "customerManagedKeysRequired": false,
+    "keyVaultStrategy": "new",
+    "keyVaultResourceId": null,
+    "secretManagementRequirements": [
+      "Applications retrieve secrets through managed identity."
+    ],
+    "resourceLocksRequired": true,
+    "defenderRequirements": [
+      "Use the applicable subscription-level Defender for Cloud plans."
+    ],
+    "publicExposure": [
+      "Public network access is prohibited for data services."
+    ]
+  },
+  "governance": {
+    "namingConvention": "Microsoft Cloud Adoption Framework naming convention.",
+    "requiredTags": {
+      "application": "example-workload",
+      "environment": "prd",
+      "owner": "workload-team",
+      "costCenter": "example-cost-center"
+    },
+    "costCenter": "example-cost-center",
+    "resourceOwnershipModel": "Workload resources are owned by the Workload Team; shared resources are owned by the Platform Team.",
+    "finOpsRequirements": [
+      "Produce an estimated monthly cost before production deployment."
+    ],
+    "allowedSkus": [],
+    "deniedSkusOrResourceTypes": [],
+    "exceptionProcess": "Exceptions require approval from the Platform Team and Security Team."
+  },
+  "operations": {
+    "availabilityTarget": "99.9 percent",
+    "highAvailabilityRequired": true,
+    "disasterRecoveryRequired": false,
+    "recoveryTimeObjective": "Four hours",
+    "recoveryPointObjective": "One hour",
+    "backupRequirements": [
+      "Back up persistent workload data according to the organizational retention policy."
+    ],
+    "maintenanceRequirements": [
+      "Production maintenance requires an approved change."
+    ],
+    "patchManagementRequirements": [
+      "Use the centrally approved patch-management process."
+    ],
+    "supportOwner": "Operations Team"
+  },
+  "observability": {
+    "logAnalyticsStrategy": "central",
+    "logAnalyticsWorkspaceResourceId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg-monitoring-we-prd/providers/Microsoft.OperationalInsights/workspaces/log-hub-we-prd",
+    "diagnosticSettings": [
+      "Send supported platform logs and metrics to the central workspace."
+    ],
+    "metricRequirements": [
+      "Availability",
+      "Capacity",
+      "Failed requests"
+    ],
+    "alertRequirements": [
+      "Alert on service unavailability.",
+      "Alert on sustained capacity exhaustion."
+    ],
+    "actionGroupResourceId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg-monitoring-we-prd/providers/Microsoft.Insights/actionGroups/ag-platform-prd",
+    "retentionRequirements": "Retain operational logs according to the central workspace policy.",
+    "externalMonitoringIntegrations": [
+      "Grafana"
+    ]
+  },
+  "delivery": {
+    "cicdPlatform": "Azure DevOps",
+    "repository": "https://dev.azure.com/example/project/_git/workload",
+    "deploymentScope": "subscription",
+    "deploymentIdentity": "Azure DevOps workload identity federation",
+    "approvalRequirements": [
+      "Production deployment requires workload-owner approval."
+    ],
+    "validationRequirements": [
+      "Bicep build",
+      "Bicep lint",
+      "PSRule for Azure",
+      "Azure deployment validation",
+      "Azure What-If"
+    ],
+    "whatIfRequired": true,
+    "deploymentMode": "Incremental",
+    "rollbackStrategy": "Use forward-fix for infrastructure definitions and restore data from approved backups when required.",
+    "parameterManagementStrategy": "Maintain environment-specific Bicep parameter files.",
+    "secretInjectionStrategy": "Use workload identity federation and Key Vault references without pipeline secrets."
+  },
+  "prohibitedChanges": [
+    "Do not modify the hub virtual network address space.",
+    "Do not modify the central Azure Firewall policy.",
+    "Do not create or modify centrally owned Private DNS zones."
+  ],
+  "dependencies": [
+    {
+      "id": "DEP-001",
+      "description": "The Platform Team must create or approve hub-to-spoke peering.",
+      "owner": "Platform Team",
+      "status": "accepted",
+      "blocking": false
+    }
+  ],
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "statement": "The workload will use the existing hub-and-spoke topology.",
+      "rationale": "The target subscription is part of the existing enterprise landing zone.",
+      "source": "user",
+      "status": "confirmed"
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "readiness": {
+    "blockingQuestionsRemaining": 0,
+    "unvalidatedCriticalAssumptions": 0,
+    "missingResourceIdentifiers": 0,
+    "conflictingRequirements": 0,
+    "readyForSpecification": true,
+    "rationale": "All material workload, platform, ownership, security, and delivery requirements have been confirmed."
+  }
+}

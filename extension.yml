@@ -1,0 +1,45 @@
+schema_version: "1.0"
+
+extension:
+  id: "azure-interview"
+  name: "Spec Kit Azure Interview"
+  version: "0.1.0"
+  description: "Guided Azure architecture discovery before specification"
+  author: "Robert Agterhuis"
+  repository: "https://github.com/RobertAgterhuis/speckit-azure-interview"
+  license: "MIT"
+  homepage: "https://github.com/RobertAgterhuis/speckit-azure-interview"
+
+requires:
+  speckit_version: ">=0.1.0"
+
+provides:
+  commands:
+    - name: "speckit.azure-interview.run"
+      file: "commands/azure-interview.md"
+      description: "Conduct a structured Azure architecture interview"
+  templates:
+    - name: "azure-context-markdown"
+      file: "templates/azure-context-template.md"
+      description: "Human-readable Azure interview output template"
+    - name: "azure-context-schema"
+      file: "templates/azure-context.schema.json"
+      description: "JSON Schema for machine-readable interview output"
+  scripts:
+    - name: "validate-azure-context"
+      file: "scripts/python/validate_context.py"
+      description: "Validate an Azure interview JSON context"
+      runtimes:
+        - "python"
+    - name: "install-hermes-skill-adapter"
+      file: "scripts/powershell/Install-HermesSkillAdapter.ps1"
+      description: "Install the generated skill into a custom Hermes home"
+      runtimes:
+        - "powershell"
+
+tags:
+  - "azure"
+  - "infrastructure"
+  - "discovery"
+  - "bicep"
+  - "avm"

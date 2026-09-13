@@ -1,0 +1,14 @@
+# Normalize all detected text files to LF by default
+* text=auto eol=lf
+
+# PowerShell uses Windows line endings
+*.ps1 text eol=crlf
+*.psd1 text eol=crlf
+*.psm1 text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary

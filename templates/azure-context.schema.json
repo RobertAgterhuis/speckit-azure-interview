@@ -1,0 +1,951 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RobertAgterhuis/speckit-azure-interview/blob/main/templates/azure-context.schema.json",
+  "title": "Spec Kit Azure Interview Context",
+  "description": "Machine-readable output of the Azure architecture interview.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "interview",
+    "workload",
+    "scope",
+    "azureEstate",
+    "network",
+    "privateConnectivity",
+    "existingResources",
+    "identity",
+    "security",
+    "governance",
+    "operations",
+    "observability",
+    "delivery",
+    "prohibitedChanges",
+    "dependencies",
+    "decisions",
+    "assumptions",
+    "openQuestions",
+    "readiness"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "interview": {
+      "$ref": "#/$defs/interview"
+    },
+    "workload": {
+      "$ref": "#/$defs/workload"
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "azureEstate": {
+      "$ref": "#/$defs/azureEstate"
+    },
+    "network": {
+      "$ref": "#/$defs/network"
+    },
+    "privateConnectivity": {
+      "$ref": "#/$defs/privateConnectivity"
+    },
+    "existingResources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/existingResource"
+      }
+    },
+    "identity": {
+      "$ref": "#/$defs/identity"
+    },
+    "security": {
+      "$ref": "#/$defs/security"
+    },
+    "governance": {
+      "$ref": "#/$defs/governance"
+    },
+    "operations": {
+      "$ref": "#/$defs/operations"
+    },
+    "observability": {
+      "$ref": "#/$defs/observability"
+    },
+    "delivery": {
+      "$ref": "#/$defs/delivery"
+    },
+    "prohibitedChanges": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trackedItem"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/assumption"
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/openQuestion"
+      }
+    },
+    "readiness": {
+      "$ref": "#/$defs/readiness"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "interview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "draft",
+            "in-progress",
+            "blocked",
+            "complete"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "interviewedBy": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "confirmedBy": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "purpose",
+        "lifecycle",
+        "iacLanguage",
+        "avmStrategy",
+        "environments",
+        "criticality"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "purpose": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "businessOwner": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "technicalOwner": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "lifecycle": {
+          "enum": [
+            "greenfield",
+            "brownfield",
+            "migration",
+            "extension"
+          ]
+        },
+        "iacLanguage": {
+          "enum": [
+            "bicep",
+            "terraform",
+            "undecided"
+          ]
+        },
+        "avmStrategy": {
+          "enum": [
+            "avm-only",
+            "avm-preferred",
+            "not-required",
+            "undecided"
+          ]
+        },
+        "environments": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "criticality": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "mission-critical",
+            "undetermined"
+          ]
+        },
+        "deliveryDate": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inScope",
+        "outOfScope",
+        "successCriteria"
+      ],
+      "properties": {
+        "inScope": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "outOfScope": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "successCriteria": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "azureEstate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "regions",
+        "subscriptions",
+        "existingLandingZone"
+      ],
+      "properties": {
+        "tenantId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "managementGroupId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "environment",
+              "subscriptionId"
+            ],
+            "properties": {
+              "environment": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "subscriptionId": {
+                "$ref": "#/$defs/nonEmptyString"
+              }
+            }
+          }
+        },
+        "resourceGroupStrategy": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "regions": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "dataResidencyRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "existingLandingZone": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "topology",
+        "addressSpaces",
+        "subnets",
+        "onPremisesConnectivity"
+      ],
+      "properties": {
+        "topology": {
+          "enum": [
+            "standalone",
+            "existing-hub-spoke",
+            "new-hub-spoke",
+            "virtual-wan",
+            "other",
+            "undetermined"
+          ]
+        },
+        "hubResourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "hubOwner": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "spokeResourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "addressSpaces": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "subnets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "prefix",
+              "purpose"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "prefix": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "purpose": {
+                "$ref": "#/$defs/nonEmptyString"
+              }
+            }
+          }
+        },
+        "peeringOwner": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "ingressPath": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "egressPath": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "firewallResourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "routeTableResourceIds": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "onPremisesConnectivity": {
+          "enum": [
+            "none",
+            "vpn",
+            "expressroute",
+            "both",
+            "unknown"
+          ]
+        },
+        "overlapValidationCompleted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "privateConnectivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "privateEndpointsRequired",
+        "publicNetworkAccess",
+        "dnsOwnership",
+        "existingPrivateDnsZones"
+      ],
+      "properties": {
+        "privateEndpointsRequired": {
+          "type": "boolean"
+        },
+        "publicNetworkAccess": {
+          "enum": [
+            "enabled",
+            "disabled",
+            "conditional",
+            "undetermined"
+          ]
+        },
+        "privateEndpointSubnetId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "dnsOwnership": {
+          "enum": [
+            "hub",
+            "spoke",
+            "central-platform",
+            "other",
+            "undetermined"
+          ]
+        },
+        "existingPrivateDnsZones": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "vnetLinkOwner": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "privateDnsResolverResourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "onPremisesDnsIntegration": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "permittedDnsChanges": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "existingResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resourceType",
+        "intent",
+        "owner",
+        "modifiable",
+        "requiredIntegrations"
+      ],
+      "properties": {
+        "resourceType": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "resourceName": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "resourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "intent": {
+          "enum": [
+            "discover",
+            "reuse",
+            "create",
+            "migrate",
+            "replace"
+          ]
+        },
+        "owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "modifiable": {
+          "type": "boolean"
+        },
+        "requiredIntegrations": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deploymentIdentity",
+        "rbacModel",
+        "managedIdentities",
+        "roleAssignmentOwner"
+      ],
+      "properties": {
+        "deploymentIdentity": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "authenticationModel": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "managedIdentities": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "rbacModel": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "roleAssignmentOwner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "entraGroups": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "administrativeUnitRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "crossTenantRequirements": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "complianceFrameworks",
+        "policyRequirements",
+        "encryptionRequirements",
+        "keyVaultStrategy",
+        "publicExposure"
+      ],
+      "properties": {
+        "complianceFrameworks": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "policyRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "securityBaseline": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "encryptionRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "customerManagedKeysRequired": {
+          "type": "boolean"
+        },
+        "keyVaultStrategy": {
+          "enum": [
+            "existing",
+            "new",
+            "not-required",
+            "undetermined"
+          ]
+        },
+        "keyVaultResourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "secretManagementRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "resourceLocksRequired": {
+          "type": "boolean"
+        },
+        "defenderRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "publicExposure": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "namingConvention",
+        "requiredTags",
+        "resourceOwnershipModel"
+      ],
+      "properties": {
+        "namingConvention": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "requiredTags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "costCenter": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "resourceOwnershipModel": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "finOpsRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "allowedSkus": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "deniedSkusOrResourceTypes": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "exceptionProcess": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "availabilityTarget",
+        "highAvailabilityRequired",
+        "disasterRecoveryRequired",
+        "backupRequirements",
+        "supportOwner"
+      ],
+      "properties": {
+        "availabilityTarget": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "highAvailabilityRequired": {
+          "type": "boolean"
+        },
+        "disasterRecoveryRequired": {
+          "type": "boolean"
+        },
+        "recoveryTimeObjective": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "recoveryPointObjective": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "backupRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "maintenanceRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "patchManagementRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "supportOwner": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "observability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logAnalyticsStrategy",
+        "diagnosticSettings",
+        "alertRequirements",
+        "retentionRequirements"
+      ],
+      "properties": {
+        "logAnalyticsStrategy": {
+          "enum": [
+            "existing",
+            "new",
+            "central",
+            "not-required",
+            "undetermined"
+          ]
+        },
+        "logAnalyticsWorkspaceResourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "diagnosticSettings": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "metricRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "alertRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "actionGroupResourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "retentionRequirements": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "externalMonitoringIntegrations": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cicdPlatform",
+        "deploymentScope",
+        "validationRequirements",
+        "whatIfRequired",
+        "rollbackStrategy"
+      ],
+      "properties": {
+        "cicdPlatform": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "repository": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "deploymentScope": {
+          "enum": [
+            "tenant",
+            "management-group",
+            "subscription",
+            "resource-group"
+          ]
+        },
+        "deploymentIdentity": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "approvalRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "validationRequirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "whatIfRequired": {
+          "type": "boolean"
+        },
+        "deploymentMode": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "rollbackStrategy": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "parameterManagementStrategy": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "secretInjectionStrategy": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+    "trackedItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "owner",
+        "status",
+        "blocking"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^DEP-[0-9]{3}$"
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "in-progress",
+            "resolved",
+            "accepted"
+          ]
+        },
+        "blocking": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "rationale",
+        "source",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^DEC-[0-9]{3}$"
+        },
+        "statement": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "source": {
+          "enum": [
+            "user",
+            "repository",
+            "azure",
+            "documentation",
+            "policy"
+          ]
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "confirmed",
+            "rejected",
+            "superseded"
+          ]
+        }
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "statement",
+        "validationRequired",
+        "owner",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ASM-[0-9]{3}$"
+        },
+        "statement": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "validationRequired": {
+          "type": "boolean"
+        },
+        "owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "status": {
+          "enum": [
+            "unvalidated",
+            "validated",
+            "rejected",
+            "accepted-risk"
+          ]
+        }
+      }
+    },
+    "openQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "question",
+        "owner",
+        "blocking",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^OQ-[0-9]{3}$"
+        },
+        "question": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "answered",
+            "deferred",
+            "accepted-risk"
+          ]
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blockingQuestionsRemaining",
+        "unvalidatedCriticalAssumptions",
+        "missingResourceIdentifiers",
+        "conflictingRequirements",
+        "readyForSpecification",
+        "rationale"
+      ],
+      "properties": {
+        "blockingQuestionsRemaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unvalidatedCriticalAssumptions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missingResourceIdentifiers": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "conflictingRequirements": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "readyForSpecification": {
+          "type": "boolean"
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "readyForSpecification": {
+                "const": true
+              }
+            },
+            "required": [
+              "readyForSpecification"
+            ]
+          },
+          "then": {
+            "properties": {
+              "blockingQuestionsRemaining": {
+                "const": 0
+              },
+              "unvalidatedCriticalAssumptions": {
+                "const": 0
+              },
+              "missingResourceIdentifiers": {
+                "const": 0
+              },
+              "conflictingRequirements": {
+                "const": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

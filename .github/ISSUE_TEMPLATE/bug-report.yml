@@ -1,0 +1,117 @@
+name: Bug report
+description: Report incorrect extension behaviour or a compatibility problem
+title: "[Bug]: "
+labels:
+  - "bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Do not include credentials, secrets,
+        access tokens, or sensitive Azure resource data.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Interview command
+        - Markdown artifact
+        - JSON artifact or schema
+        - Context validator
+        - Extension installation
+        - Hermes adapter
+        - Documentation
+        - CI or tests
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: speckit-version
+    attributes:
+      label: Spec Kit version
+      placeholder: "Output of: specify --version"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: integration
+    attributes:
+      label: AI integration
+      options:
+        - Claude Code
+        - Hermes
+        - Codex
+        - GitHub Copilot
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: Do not include API keys or account information.
+      placeholder: "For example: Claude Sonnet or qwen3.5:9b"
+
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system and shell
+      placeholder: "Windows 11 with PowerShell 7"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: Describe what should have happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Describe what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Initialize Spec Kit with...
+        2. Install the extension with...
+        3. Invoke the interview with...
+        4. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Remove secrets, tokens, tenant data, and sensitive resource IDs.
+      render: text
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed credentials, secrets, tokens, and sensitive production data.
+          required: true
+        - label: I checked whether this should be reported privately under SECURITY.md.
+          required: true

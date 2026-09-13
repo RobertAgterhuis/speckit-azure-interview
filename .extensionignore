@@ -1,0 +1,33 @@
+# Version-control metadata
+.git/
+.gitattributes
+.gitignore
+
+# Development environments and caches
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# CI and repository automation
+.github/
+
+# Development-only tests and configuration
+tests/
+.editorconfig
+.yamllint.yml
+pyproject.toml
+requirements-dev.txt
+CONTRIBUTING.md
+SECURITY.md
+
+# Local Spec Kit and generated output
+.specify/
+coverage/
+TestResults/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak

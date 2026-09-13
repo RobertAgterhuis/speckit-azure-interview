@@ -427,3 +427,24 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Spec Kit Azure Interview project files
+*-config.local.yml
+.specify/extensions/*/*-config.local.yml
+.specify/discovery/
+
+# Local environments and test output
+.venv/
+venv/
+.pytest_cache/
+TestResults/
+coverage/
+*.trx
+
+# Local tool output
+*.clixml
+.vscode/*.log
+*.tmp
+*.temp
+*.bak
+*.swp

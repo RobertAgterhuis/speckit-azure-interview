@@ -1,0 +1,77 @@
+name: Feature request
+description: Propose an improvement to Azure discovery or integration support
+title: "[Feature]: "
+labels:
+  - "enhancement"
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Which discovery or workflow problem should be solved?
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the expected behaviour without prescribing code.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Workload discovery
+        - Brownfield discovery
+        - Network and DNS
+        - Identity and security
+        - Governance and FinOps
+        - Reliability and operations
+        - Delivery and validation
+        - Artifact schema
+        - AI integration
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: compatibility
+    attributes:
+      label: Spec Kit Core impact
+      options:
+        - No Core changes required
+        - Unsure
+        - Appears to require a Core change
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe existing commands or workarounds you evaluated.
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - The interview...
+        - The generated artifact...
+        - The extension must not...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Extension principles
+      options:
+        - label: The proposal can remain isolated from Spec Kit Core.
+          required: true
+        - label: The proposal does not require Azure write operations during discovery.
+          required: true
