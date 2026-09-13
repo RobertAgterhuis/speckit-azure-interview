@@ -18,7 +18,16 @@ and this project adheres to
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
-## [0.1.0] - 2026-09-13
+## [0.1.1] - 2026-09-13
+
+### Fixed
+
+- Corrected the public installation instructions to use the supported
+  `specify extension add <name> --from <archive-url>` syntax.
+- Replaced the unsupported Git repository URL with an immutable versioned
+  GitHub release archive.
+- Documented the expected untrusted-source confirmation for extensions
+  installed outside the official Spec Kit catalog.
 
 ### Added
 
@@ -53,5 +62,6 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/releases/tag/v0.1.0
