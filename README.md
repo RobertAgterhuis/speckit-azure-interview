@@ -120,11 +120,11 @@ Replace `claude` with another supported integration when required.
 
 ### Install the Extension from GitHub
 
-```powershell
-specify extension add `
-    https://github.com/RobertAgterhuis/speckit-azure-interview.git
-```
+Install the immutable release archive:
 
+```powershell
+specify extension add azure-interview `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.1.1.zip
 Verify the installation:
 
 ```powershell
