@@ -8,6 +8,9 @@ A provider-independent GitHub Spec Kit extension that conducts a structured Azur
 
 It captures business requirements, Azure landing-zone context, networking, private DNS, existing resources, identity, security, governance, operational requirements, constraints, assumptions, and unresolved decisions.
 
+> New user? Follow the [Quick Start](QUICK-START.md) for prerequisites,
+> installation, and the complete command order.
+
 ## Why This Extension Exists
 
 Spec Kit provides a strong specification-driven development workflow. However, Azure infrastructure solutions often require architectural decisions that cannot safely remain implicit when `/speckit.specify` starts.
@@ -326,6 +329,7 @@ See [Testing Guide](docs/TESTING.md) for integration and smoke-test procedures.
 
 ## Documentation
 
+- [Quick Start](QUICK-START.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Testing Guide](docs/TESTING.md)
 - [Hermes Integration](docs/HERMES.md)

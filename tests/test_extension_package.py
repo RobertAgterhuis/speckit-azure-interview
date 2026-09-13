@@ -46,6 +46,7 @@ def test_required_repository_files_exist() -> None:
     required_files = [
         "extension.yml",
         "README.md",
+        "QUICK-START.md",
         "LICENSE",
         "CHANGELOG.md",
         "requirements-dev.txt",
@@ -285,3 +286,40 @@ def test_declared_scripts_are_valid_and_exist(
         assert script_path.is_file(), f"Script file does not exist: {script['file']}"
 
         script_names.add(name)
+
+
+def test_quick_start_documents_required_workflow_order() -> None:
+    """Quick Start must place Azure discovery before specification."""
+    quick_start_path = REPOSITORY_ROOT / "QUICK-START.md"
+    quick_start_content = quick_start_path.read_text(encoding="utf-8")
+
+    ordered_sections = [
+        "## 8. Establish the Constitution",
+        "## 9. Run the Azure Architecture Interview",
+        "## 10. Verify Interview Readiness",
+        "## 11. Create the Specification",
+        "## 12. Clarify the Specification",
+        "## 13. Create the Implementation Plan",
+        "## 14. Generate a Quality Checklist",
+        "## 15. Generate Tasks",
+        "## 16. Analyze Consistency",
+        "## 17. Implement",
+        "## 18. Converge",
+    ]
+
+    section_positions = [quick_start_content.index(section) for section in ordered_sections]
+
+    assert section_positions == sorted(section_positions)
+
+
+def test_quick_start_uses_versioned_public_archive() -> None:
+    """Quick Start must document the tested public installation syntax."""
+    quick_start_path = REPOSITORY_ROOT / "QUICK-START.md"
+    quick_start_content = quick_start_path.read_text(encoding="utf-8")
+
+    assert "specify extension add azure-interview" in quick_start_content
+    assert (
+        "--from "
+        "https://github.com/RobertAgterhuis/"
+        "speckit-azure-interview/archive/refs/tags/v0.1.1.zip" in quick_start_content
+    )
