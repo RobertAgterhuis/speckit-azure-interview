@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -14,11 +15,15 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+from jsonschema import Draft202012Validator, FormatChecker
+
 RESOURCE_INVENTORY_QUERY = """
 Resources
 | project id, name, type, location, resourceGroup, subscriptionId, kind, managedBy
 | order by type asc, name asc
 """.strip()
+EXIT_SUCCESS = 0
+EXIT_EXECUTION_ERROR = 2
 
 
 def parse_arguments(
@@ -281,6 +286,35 @@ def build_inventory_document(
     }
 
 
+def validate_inventory_document(
+    document: dict[str, Any],
+    schema: dict[str, Any],
+) -> None:
+    """Validate inventory evidence against schema and semantic rules."""
+    Draft202012Validator.check_schema(schema)
+
+    validator = Draft202012Validator(
+        schema,
+        format_checker=FormatChecker(),
+    )
+    schema_errors = list(validator.iter_errors(document))
+
+    if schema_errors:
+        error_messages = sorted(error.message for error in schema_errors)
+        raise ValueError("Inventory schema validation failed: " + "; ".join(error_messages))
+
+    recorded_resource_count = document["resourceCount"]
+    actual_resource_count = len(document["resources"])
+
+    if recorded_resource_count != actual_resource_count:
+        raise ValueError(
+            "Inventory resourceCount does not match the "
+            f"actual resource count: recorded "
+            f"{recorded_resource_count}, actual "
+            f"{actual_resource_count}."
+        )
+
+
 def write_inventory_document(
     document: dict[str, Any],
     output_path: Path,
@@ -337,6 +371,131 @@ def write_inventory_document(
             temporary_path.unlink(missing_ok=True)
 
 
+def collect_inventory(
+    *,
+    subscription_id: str,
+    tenant_id: str | None = None,
+    collected_at: datetime | None = None,
+    runner: Any = subprocess.run,
+) -> dict[str, Any]:
+    """Collect validated, subscription-scoped Azure inventory evidence."""
+    approved_subscription_id = validate_azure_identifier(subscription_id)
+    approved_tenant_id = validate_azure_identifier(tenant_id) if tenant_id is not None else None
+
+    account_response = execute_json_command(
+        build_account_show_command(),
+        runner=runner,
+    )
+    account = validate_account_context(
+        account_response,
+        expected_subscription_id=approved_subscription_id,
+        expected_tenant_id=approved_tenant_id,
+    )
+
+    graph_response = execute_json_command(
+        build_resource_graph_command(
+            approved_subscription_id,
+            RESOURCE_INVENTORY_QUERY,
+        ),
+        runner=runner,
+    )
+    resources = extract_resource_records(
+        graph_response,
+        expected_subscription_id=approved_subscription_id,
+    )
+
+    collection_time = collected_at if collected_at is not None else datetime.now(timezone.utc)
+
+    return build_inventory_document(
+        account,
+        resources,
+        collected_at=collection_time,
+    )
+
+
+def load_inventory_schema() -> dict[str, Any]:
+    """Load the packaged Azure inventory JSON Schema."""
+    schema_path = Path(__file__).resolve().parents[2] / "templates" / "azure-inventory.schema.json"
+
+    try:
+        with schema_path.open(
+            "r",
+            encoding="utf-8",
+        ) as schema_file:
+            schema = json.load(schema_file)
+    except FileNotFoundError as exception:
+        raise RuntimeError(f"Inventory schema was not found: {schema_path}") from exception
+    except json.JSONDecodeError as exception:
+        raise RuntimeError(f"Inventory schema is not valid JSON: {schema_path}") from exception
+
+    if not isinstance(schema, dict):
+        raise RuntimeError("Inventory schema root must be a JSON object.")
+
+    return schema
+
+
+def run(
+    arguments: list[str] | None = None,
+    *,
+    project_root: Path | None = None,
+    collected_at: datetime | None = None,
+    runner: Any = subprocess.run,
+) -> Path:
+    """Run collection, validation, and safe evidence persistence."""
+    parsed_arguments = parse_arguments(arguments)
+    effective_project_root = project_root if project_root is not None else Path.cwd()
+    output_path = validate_output_path(
+        parsed_arguments.output,
+        project_root=effective_project_root,
+    )
+
+    document = collect_inventory(
+        subscription_id=parsed_arguments.subscription,
+        tenant_id=parsed_arguments.tenant,
+        collected_at=collected_at,
+        runner=runner,
+    )
+    schema = load_inventory_schema()
+    validate_inventory_document(document, schema)
+    write_inventory_document(
+        document,
+        output_path,
+        overwrite=parsed_arguments.overwrite,
+    )
+
+    return output_path
+
+
+def main(
+    arguments: list[str] | None = None,
+    *,
+    project_root: Path | None = None,
+    collected_at: datetime | None = None,
+    runner: Any = subprocess.run,
+) -> int:
+    """Run the CLI and return a stable process exit code."""
+    try:
+        output_path = run(
+            arguments,
+            project_root=project_root,
+            collected_at=collected_at,
+            runner=runner,
+        )
+    except (OSError, RuntimeError, ValueError) as exception:
+        print(
+            f"Azure inventory collection failed: {exception}",
+            file=sys.stderr,
+        )
+        return EXIT_EXECUTION_ERROR
+
+    print(f"Azure inventory evidence written successfully: {output_path}")
+    print(
+        "Evidence status: unconfirmed. Review and confirm "
+        "findings during the Azure architecture interview."
+    )
+    return EXIT_SUCCESS
+
+
 def build_account_show_command() -> list[str]:
     """Build the read-only command used to inspect the active Azure context."""
     return [
@@ -371,3 +530,7 @@ def build_resource_graph_command(
         "json",
         "--only-show-errors",
     ]
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

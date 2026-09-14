@@ -917,3 +917,349 @@ def test_write_inventory_document_allows_explicit_overwrite(
     )
 
     assert json.loads(output_path.read_text(encoding="utf-8")) == document
+
+
+def test_collect_inventory_runs_scoped_read_only_workflow(
+    collector_module: ModuleType,
+) -> None:
+    """Collection validates context before querying scoped resource metadata."""
+    account_response = {
+        "id": SUBSCRIPTION_ID,
+        "name": "Production",
+        "state": "Enabled",
+        "tenantId": TENANT_ID,
+    }
+    graph_response = {
+        "data": [
+            {
+                "id": (
+                    "/subscriptions/"
+                    f"{SUBSCRIPTION_ID}"
+                    "/resourceGroups/rg-platform-weu-prd"
+                    "/providers/Microsoft.Network/virtualNetworks/"
+                    "vnet-platform-weu-prd"
+                ),
+                "name": "vnet-platform-weu-prd",
+                "type": "microsoft.network/virtualnetworks",
+                "location": "westeurope",
+                "resourceGroup": "rg-platform-weu-prd",
+                "subscriptionId": SUBSCRIPTION_ID,
+                "kind": None,
+                "managedBy": None,
+            }
+        ]
+    }
+    responses = [
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(account_response),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(graph_response),
+            stderr="",
+        ),
+    ]
+    observed_commands: list[list[str]] = []
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        observed_commands.append(command)
+        return responses.pop(0)
+
+    document = collector_module.collect_inventory(
+        subscription_id=SUBSCRIPTION_ID,
+        tenant_id=TENANT_ID,
+        collected_at=datetime(
+            2026,
+            9,
+            14,
+            8,
+            30,
+            tzinfo=timezone.utc,
+        ),
+        runner=fake_runner,
+    )
+
+    assert observed_commands == [
+        collector_module.build_account_show_command(),
+        collector_module.build_resource_graph_command(
+            SUBSCRIPTION_ID,
+            collector_module.RESOURCE_INVENTORY_QUERY,
+        ),
+    ]
+    assert document["scope"] == {
+        "subscriptionId": SUBSCRIPTION_ID,
+        "subscriptionName": "Production",
+        "tenantId": TENANT_ID,
+    }
+    assert document["resourceCount"] == 1
+    assert document["evidenceStatus"] == "unconfirmed"
+    assert responses == []
+
+
+def test_collect_inventory_stops_before_query_on_context_mismatch(
+    collector_module: ModuleType,
+) -> None:
+    """Resource Graph is not queried when the active scope is incorrect."""
+    wrong_subscription_id = "33333333-3333-4333-8333-333333333333"
+    observed_commands: list[list[str]] = []
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        observed_commands.append(command)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "id": wrong_subscription_id,
+                    "name": "Wrong subscription",
+                    "state": "Enabled",
+                    "tenantId": TENANT_ID,
+                }
+            ),
+            stderr="",
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="Active subscription does not match",
+    ):
+        collector_module.collect_inventory(
+            subscription_id=SUBSCRIPTION_ID,
+            tenant_id=TENANT_ID,
+            collected_at=datetime(
+                2026,
+                9,
+                14,
+                8,
+                30,
+                tzinfo=timezone.utc,
+            ),
+            runner=fake_runner,
+        )
+
+    assert observed_commands == [collector_module.build_account_show_command()]
+
+
+def test_validate_inventory_document_accepts_valid_evidence(
+    collector_module: ModuleType,
+) -> None:
+    """Valid inventory evidence passes schema and semantic validation."""
+    collector_module.validate_inventory_document(
+        build_valid_inventory_document(collector_module),
+        load_inventory_schema(),
+    )
+
+
+def test_validate_inventory_document_rejects_count_mismatch(
+    collector_module: ModuleType,
+) -> None:
+    """The recorded resource count must match the resource collection."""
+    document = build_valid_inventory_document(collector_module)
+    document["resourceCount"] = 2
+
+    with pytest.raises(
+        ValueError,
+        match=r"resourceCount.*actual resource count",
+    ):
+        collector_module.validate_inventory_document(
+            document,
+            load_inventory_schema(),
+        )
+
+
+def test_validate_inventory_document_rejects_schema_violation(
+    collector_module: ModuleType,
+) -> None:
+    """Invalid evidence cannot be written to disk."""
+    document = build_valid_inventory_document(collector_module)
+    document["unexpected"] = True
+
+    with pytest.raises(
+        ValueError,
+        match="Inventory schema validation failed",
+    ):
+        collector_module.validate_inventory_document(
+            document,
+            load_inventory_schema(),
+        )
+
+
+def test_run_collects_validates_and_writes_inventory(
+    collector_module: ModuleType,
+    tmp_path: Path,
+) -> None:
+    """The application workflow produces validated project-local evidence."""
+    project_root = tmp_path / "project"
+    (project_root / ".specify").mkdir(parents=True)
+
+    account_response = {
+        "id": SUBSCRIPTION_ID,
+        "name": "Production",
+        "state": "Enabled",
+        "tenantId": TENANT_ID,
+    }
+    graph_response = {
+        "data": [
+            {
+                "id": (
+                    "/subscriptions/"
+                    f"{SUBSCRIPTION_ID}"
+                    "/resourceGroups/rg-platform-weu-prd"
+                    "/providers/Microsoft.Network/virtualNetworks/"
+                    "vnet-platform-weu-prd"
+                ),
+                "name": "vnet-platform-weu-prd",
+                "type": "microsoft.network/virtualnetworks",
+                "location": "westeurope",
+                "resourceGroup": "rg-platform-weu-prd",
+                "subscriptionId": SUBSCRIPTION_ID,
+                "kind": None,
+                "managedBy": None,
+            }
+        ]
+    }
+    responses = [
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(account_response),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(graph_response),
+            stderr="",
+        ),
+    ]
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        return responses.pop(0)
+
+    output_path = collector_module.run(
+        [
+            "--subscription",
+            SUBSCRIPTION_ID,
+            "--tenant",
+            TENANT_ID,
+            "--approve-read-only",
+        ],
+        project_root=project_root,
+        collected_at=datetime(
+            2026,
+            9,
+            14,
+            8,
+            30,
+            tzinfo=timezone.utc,
+        ),
+        runner=fake_runner,
+    )
+
+    assert (
+        output_path == (project_root / ".specify" / "discovery" / "azure-inventory.json").resolve()
+    )
+    document = json.loads(output_path.read_text(encoding="utf-8"))
+    collector_module.validate_inventory_document(
+        document,
+        load_inventory_schema(),
+    )
+    assert document["resourceCount"] == 1
+    assert document["evidenceStatus"] == "unconfirmed"
+    assert responses == []
+
+
+def test_main_reports_successful_unconfirmed_collection(
+    collector_module: ModuleType,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The CLI reports the output path and unconfirmed evidence status."""
+    project_root = tmp_path / "project"
+    (project_root / ".specify").mkdir(parents=True)
+
+    responses = [
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "id": SUBSCRIPTION_ID,
+                    "name": "Production",
+                    "state": "Enabled",
+                    "tenantId": TENANT_ID,
+                }
+            ),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"data": []}),
+            stderr="",
+        ),
+    ]
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        return responses.pop(0)
+
+    exit_code = collector_module.main(
+        [
+            "--subscription",
+            SUBSCRIPTION_ID,
+            "--tenant",
+            TENANT_ID,
+            "--approve-read-only",
+        ],
+        project_root=project_root,
+        collected_at=datetime(
+            2026,
+            9,
+            14,
+            8,
+            30,
+            tzinfo=timezone.utc,
+        ),
+        runner=fake_runner,
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == collector_module.EXIT_SUCCESS
+    assert "azure-inventory.json" in captured.out
+    assert "unconfirmed" in captured.out.lower()
+    assert captured.err == ""
+
+
+def test_main_reports_controlled_execution_error(
+    collector_module: ModuleType,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Expected safety failures return a stable execution-error code."""
+    project_root = tmp_path / "not-a-speckit-project"
+    project_root.mkdir()
+
+    exit_code = collector_module.main(
+        [
+            "--subscription",
+            SUBSCRIPTION_ID,
+            "--approve-read-only",
+        ],
+        project_root=project_root,
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == collector_module.EXIT_EXECUTION_ERROR
+    assert captured.out == ""
+    assert "Spec Kit project" in captured.err
