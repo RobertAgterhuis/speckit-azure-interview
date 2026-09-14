@@ -17,6 +17,41 @@ and this project adheres to
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
+## [0.5.0] - 2026-09-14
+
+### Added
+
+- `speckit.azure-interview.design` intended-architecture command.
+- Validated `.specify/design/azure-design-model.json` design contract.
+- Human-reviewable `.specify/design/azure-design-overview.md` artifact.
+- Deterministic Mermaid intended-architecture diagram.
+- Standalone `.specify/design/azure-design-overview.svg` diagram.
+- Editable `.specify/design/azure-design-overview.drawio` diagram.
+- Existing-versus-planned resource visualization.
+- Architecture relationships for hub peering, subnets, central egress,
+  private DNS, private endpoints, and diagnostic settings.
+- Stable node and relationship identifiers.
+- JSON Schema and semantic validation for intended-design models.
+- Explicit overwrite protection across the complete design artifact set.
+- Safe escaping for Markdown, Mermaid, SVG, XML, and Draw.io content.
+- Comprehensive generator, schema, rendering, command, and package tests.
+
+### Changed
+
+- Updated the extension manifest to version `0.5.0`.
+- Registered the design command, generator, and schema as packaged resources.
+- Updated active installation examples to the immutable v0.5.0 archive.
+- Extended the post-interview workflow with an explicit human design-review
+  stage before implementation.
+
+### Security
+
+- Intended designs remain `unreviewed` until explicit human approval.
+- Design generation cannot claim or prove deployed Azure state.
+- Existing output artifacts cannot be replaced without `--overwrite`.
+- Input and output paths remain constrained to the consumer Spec Kit project.
+- Relationship endpoints must reference valid architecture nodes.
+
 ## [0.4.0] - 2026-09-14
 
 ### Added
@@ -168,7 +203,8 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.1...v0.2.0

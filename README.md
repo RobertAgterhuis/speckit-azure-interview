@@ -162,7 +162,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 Verify the installation:
 
 ```powershell
@@ -324,7 +324,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 ```
 
 Spec Kit generates the project-local skill at:
@@ -565,3 +565,27 @@ Contributions and issue reports are welcome. Read [CONTRIBUTING.md](CONTRIBUTING
 ## License
 
 Licensed under the [MIT License](LICENSE).
+
+## Azure Intended Design
+
+After completing and confirming the Azure architecture interview, generate a
+reviewable intended-state design with:
+
+    /speckit.azure-interview.design
+
+The command creates:
+
+- `.specify/design/azure-design-model.json`;
+- `.specify/design/azure-design-overview.md` with Mermaid;
+- `.specify/design/azure-design-overview.svg`;
+- `.specify/design/azure-design-overview.drawio`.
+
+A newly generated design has `designStatus: intended` and
+`reviewStatus: unreviewed`. It represents proposed architecture derived from
+confirmed interview information; it does not prove deployed Azure state.
+
+Review planned and existing resources, ownership boundaries, network paths,
+private endpoints, diagnostic settings, and dependencies before implementation.
+
+See [Azure Intended Design](docs/AZURE-DESIGN.md) for prerequisites, artifact
+contracts, overwrite protection, security boundaries, and the review workflow.

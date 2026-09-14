@@ -405,3 +405,45 @@ prohibited changes before recording Azure-sourced facts in the context.
 The layer is optional, read-only, provider-independent at the command level,
 and additive to Spec Kit Core. It does not deploy resources, execute What-If,
 retrieve secret values, or alter the specification workflow.
+
+## Intended-Design Evidence Layer
+
+The intended-design layer starts only after the interview context is complete
+and confirmed.
+
+The artifact flow is:
+
+    azure-inventory.json (optional, unconfirmed)
+        -> Azure interview reconciliation
+        -> azure-context.json (confirmed)
+        -> azure-design-model.json (intended, unreviewed)
+        -> Markdown, Mermaid, SVG, and Draw.io review artifacts
+        -> explicit human approval
+        -> specification and implementation
+
+The authoritative machine-readable design artifact is:
+
+    .specify/design/azure-design-model.json
+
+It contains stable architecture nodes and relationships. Relationship endpoints
+must refer to existing node identifiers, and all identifiers must be unique.
+
+The synchronized visual artifacts are:
+
+- `.specify/design/azure-design-overview.md`;
+- `.specify/design/azure-design-overview.svg`;
+- `.specify/design/azure-design-overview.drawio`.
+
+The Mermaid, SVG, and Draw.io renderers consume the validated design model.
+They do not independently infer Azure resources.
+
+Existing resources and planned resources use different visual states. Existing
+does not mean that deployed configuration has been verified; it records the
+confirmed lifecycle intent from the interview.
+
+The generator performs preflight checks across all output paths and writes
+atomically. An existing artifact set requires explicit `--overwrite` approval.
+
+As-built verification remains a separate future layer. It must compare deployed
+Azure state with the approved intended design without rewriting the original
+design record.

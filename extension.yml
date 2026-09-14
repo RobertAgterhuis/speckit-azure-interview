@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "azure-interview"
   name: "Spec Kit Azure Interview"
-  version: "0.4.0"
+  version: "0.5.0"
   description: "Guided Azure architecture discovery before specification"
   author: "Robert Agterhuis"
   repository: "https://github.com/RobertAgterhuis/speckit-azure-interview"
@@ -21,6 +21,9 @@ provides:
     - name: "speckit.azure-interview.inventory"
       file: "commands/azure-inventory.md"
       description: "Collect scoped read-only Azure inventory evidence"
+    - name: "speckit.azure-interview.design"
+      file: "commands/azure-design.md"
+      description: "Generate a reviewable intended-state Azure architecture design"
   templates:
     - name: "azure-context-markdown"
       file: "templates/azure-context-template.md"
@@ -31,6 +34,9 @@ provides:
     - name: "azure-inventory-schema"
       file: "templates/azure-inventory.schema.json"
       description: "JSON Schema for unconfirmed Azure inventory evidence"
+    - name: "azure-design-schema"
+      file: "templates/azure-design.schema.json"
+      description: "JSON Schema for reviewable intended-state Azure architecture"
   scripts:
     - name: "validate-azure-context"
       file: "scripts/python/validate_context.py"
@@ -40,6 +46,11 @@ provides:
     - name: "collect-azure-inventory"
       file: "scripts/python/collect_azure_inventory.py"
       description: "Collect scoped read-only Azure Resource Graph evidence"
+      runtimes:
+        - "python"
+    - name: "generate-azure-design"
+      file: "scripts/python/generate_azure_design.py"
+      description: "Generate reviewable intended-state Azure design artifacts"
       runtimes:
         - "python"
     - name: "install-hermes-skill-adapter"

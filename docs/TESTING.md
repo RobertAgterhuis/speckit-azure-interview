@@ -251,7 +251,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 ```
 
 Verify the generated skill:
@@ -344,7 +344,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 ```
 
 Accept the expected external-source warning only after verifying the archive
@@ -360,7 +360,7 @@ specify extension info azure-interview
 Expected installation output includes:
 
 ```text
-Spec Kit Azure Interview (v0.4.0)
+Spec Kit Azure Interview (v0.5.0)
 1 agent skill(s) auto-registered
 ```
 
@@ -603,3 +603,48 @@ artifact, retained only the eight approved metadata fields, and wrote
 
 Live testing must use a non-production or explicitly approved subscription.
 Generated inventory evidence must not be committed without review.
+
+## Azure Intended-Design Tests
+
+The intended-design test suite validates:
+
+- completed and confirmed Azure context requirements;
+- deterministic architecture nodes and relationships;
+- existing and planned lifecycle states;
+- hub peering, subnet containment, central egress, and private DNS;
+- private endpoint and diagnostic-setting relationships;
+- JSON Schema validation;
+- unique node and relationship identifiers;
+- valid relationship endpoints;
+- project-local input and output paths;
+- overwrite preflight across all four artifacts;
+- atomic JSON and text output;
+- deterministic Mermaid rendering;
+- valid and safely escaped SVG;
+- editable and safely escaped Draw.io XML;
+- command and extension package contracts.
+
+Run the focused generator tests:
+
+    python -m pytest tests/test_generate_azure_design.py -q
+
+Run the package tests:
+
+    python -m pytest tests/test_extension_package.py -q
+
+Run the full suite:
+
+    python -m pytest -q
+
+A manual smoke test must also verify that:
+
+- the Markdown preview renders the Mermaid diagram;
+- the SVG opens independently;
+- the Draw.io file opens in diagrams.net;
+- all nodes and relationships are visible;
+- existing and planned resources remain distinguishable;
+- relationship labels do not obscure resource content;
+- all four artifacts describe the same intended architecture.
+
+The smoke test confirms rendering compatibility only. It does not approve the
+design or verify deployed Azure state.
