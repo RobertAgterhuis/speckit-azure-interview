@@ -465,7 +465,6 @@ def run(
 
     return output_path
 
-
 def main(
     arguments: list[str] | None = None,
     *,
@@ -488,25 +487,32 @@ def main(
         )
         return EXIT_EXECUTION_ERROR
 
-    print(f"Azure inventory evidence written successfully: {output_path}")
+    print(
+        "Azure inventory evidence written successfully: "
+        f"{output_path}"
+    )
     print(
         "Evidence status: unconfirmed. Review and confirm "
         "findings during the Azure architecture interview."
     )
     return EXIT_SUCCESS
 
+if __name__ == "__main__":
+    raise SystemExit(main())
+
 
 def build_account_show_command() -> list[str]:
-    """Build the read-only command used to inspect the active Azure context."""
+    """Build the minimized read-only Azure context inspection command."""
     return [
         "az",
         "account",
         "show",
+        "--query",
+        "{id:id,name:name,state:state,tenantId:tenantId}",
         "--output",
         "json",
         "--only-show-errors",
     ]
-
 
 def build_resource_graph_command(
     subscription_id: str,
@@ -531,6 +537,3 @@ def build_resource_graph_command(
         "--only-show-errors",
     ]
 
-
-if __name__ == "__main__":
-    raise SystemExit(main())

@@ -86,6 +86,8 @@ def test_build_account_show_command_is_read_only(
         "az",
         "account",
         "show",
+        "--query",
+        "{id:id,name:name,state:state,tenantId:tenantId}",
         "--output",
         "json",
         "--only-show-errors",
