@@ -1346,3 +1346,40 @@ def test_extract_resource_records_removes_unexpected_fields(
             "managedBy": None,
         }
     ]
+
+
+def test_run_stops_before_azure_when_output_exists(
+    collector_module: ModuleType,
+    tmp_path: Path,
+) -> None:
+    """Existing evidence blocks Azure calls unless overwrite was approved."""
+    project_root = tmp_path / "project"
+    output_path = project_root / ".specify" / "discovery" / "azure-inventory.json"
+    output_path.parent.mkdir(parents=True)
+    output_path.write_text(
+        '{"existing": true}\n',
+        encoding="utf-8",
+    )
+    azure_called = False
+
+    def unexpected_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        nonlocal azure_called
+        azure_called = True
+        raise AssertionError("Azure CLI must not run when output already exists.")
+
+    with pytest.raises(FileExistsError, match="--overwrite"):
+        collector_module.run(
+            [
+                "--subscription",
+                SUBSCRIPTION_ID,
+                "--approve-read-only",
+            ],
+            project_root=project_root,
+            runner=unexpected_runner,
+        )
+
+    assert azure_called is False
+    assert json.loads(output_path.read_text(encoding="utf-8")) == {"existing": True}

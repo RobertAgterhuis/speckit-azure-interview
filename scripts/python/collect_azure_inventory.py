@@ -472,6 +472,12 @@ def run(
         project_root=effective_project_root,
     )
 
+    if output_path.exists() and not parsed_arguments.overwrite:
+        raise FileExistsError(
+            f"Inventory evidence already exists: {output_path}. "
+            "Use --overwrite to replace it explicitly."
+        )
+
     document = collect_inventory(
         subscription_id=parsed_arguments.subscription,
         tenant_id=parsed_arguments.tenant,
