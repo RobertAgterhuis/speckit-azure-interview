@@ -49,6 +49,7 @@ def test_required_repository_files_exist() -> None:
         "QUICK-START.md",
         "docs/CODEX.md",
         "docs/COPILOT.md",
+        "docs/AZURE-INVENTORY.md",
         "LICENSE",
         "CHANGELOG.md",
         "requirements-dev.txt",
@@ -437,3 +438,25 @@ def test_interview_reconciles_unconfirmed_inventory_evidence() -> None:
 
     for statement in required_statements:
         assert statement in command_content
+
+
+def test_inventory_documentation_covers_safe_operation() -> None:
+    """Inventory documentation must cover setup, safety, and reconciliation."""
+    documentation = (REPOSITORY_ROOT / "docs" / "AZURE-INVENTORY.md").read_text(encoding="utf-8")
+
+    required_statements = [
+        "Azure CLI",
+        "Azure Resource Graph",
+        "Reader",
+        "--approve-read-only",
+        "--overwrite",
+        ".specify/discovery/azure-inventory.json",
+        "evidenceStatus",
+        "unconfirmed",
+        "Windows",
+        "must not be committed",
+        "Troubleshooting",
+    ]
+
+    for statement in required_statements:
+        assert statement in documentation
