@@ -1296,3 +1296,53 @@ def test_execute_json_command_retries_windows_azure_cli_wrapper(
     assert result == {"state": "Enabled"}
     assert observed_commands[0][0] == "az"
     assert observed_commands[1][0] == "az.cmd"
+
+
+def test_extract_resource_records_removes_unexpected_fields(
+    collector_module: ModuleType,
+) -> None:
+    """Only explicitly approved metadata enters inventory evidence."""
+    response = {
+        "data": [
+            {
+                "id": (
+                    "/subscriptions/"
+                    f"{SUBSCRIPTION_ID}"
+                    "/resourceGroups/rg-platform-weu-prd"
+                    "/providers/Microsoft.Storage/storageAccounts/"
+                    "stplatformweuprd"
+                ),
+                "name": "stplatformweuprd",
+                "type": "microsoft.storage/storageaccounts",
+                "location": "westeurope",
+                "resourceGroup": "rg-platform-weu-prd",
+                "subscriptionId": SUBSCRIPTION_ID,
+                "kind": "StorageV2",
+                "managedBy": None,
+                "properties": {"unexpected": "must-not-be-copied"},
+                "identity": {"principalId": "must-not-be-copied"},
+                "tags": {"confidential": "must-not-be-copied"},
+                "sku": {"name": "Standard_LRS"},
+                "tenantId": TENANT_ID,
+                "zones": ["1"],
+            }
+        ]
+    }
+
+    records = collector_module.extract_resource_records(
+        response,
+        expected_subscription_id=SUBSCRIPTION_ID,
+    )
+
+    assert records == [
+        {
+            "id": response["data"][0]["id"],
+            "name": "stplatformweuprd",
+            "type": "microsoft.storage/storageaccounts",
+            "location": "westeurope",
+            "resourceGroup": "rg-platform-weu-prd",
+            "subscriptionId": SUBSCRIPTION_ID,
+            "kind": "StorageV2",
+            "managedBy": None,
+        }
+    ]

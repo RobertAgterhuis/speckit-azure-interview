@@ -270,7 +270,9 @@ def extract_resource_records(
                 f"Resource record at index {index} is outside the approved subscription."
             )
 
-        records.append(dict(record))
+        records.append(
+            {property_name: record[property_name] for property_name in required_properties}
+        )
 
     return records
 
