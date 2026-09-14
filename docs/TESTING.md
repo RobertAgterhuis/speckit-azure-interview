@@ -226,6 +226,97 @@ Verify that the interview:
 - Does not create the JSON artifact before all required values are confirmed.
 - Tracks contradictions and unresolved decisions explicitly.
 
+## Codex CLI Smoke Test
+
+Create or use a dedicated Codex test project. Do not run the smoke test from the
+extension source repository.
+
+Initialize Spec Kit:
+
+```powershell
+$CodexTestPath = "G:\PERSONAL\REPOS\speckit-azure-interview-test-codex"
+
+New-Item `
+    -ItemType Directory `
+    -Path $CodexTestPath `
+    -ErrorAction SilentlyContinue |
+    Out-Null
+
+Set-Location $CodexTestPath
+
+specify init --here --integration codex --script ps
+```
+
+Install the released extension:
+
+```powershell
+specify extension add azure-interview `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.2.0.zip
+```
+
+Verify the generated skill:
+
+```powershell
+Test-Path `
+    .\.agents\skills\speckit-azure-interview-run\SKILL.md
+```
+
+Expected:
+
+```text
+True
+```
+
+Start Codex:
+
+```powershell
+codex
+```
+
+Invoke the skill:
+
+```text
+$speckit-azure-interview-run
+
+We need an AVM-based Bicep solution for a production workload that must integrate with an existing Azure landing zone. Start a new Azure architecture interview.
+```
+
+Verify that Codex:
+
+- Explicitly activates or acknowledges `speckit-azure-interview-run`.
+- Reads the project-local skill from `.agents/skills`.
+- Reads the constitution and extension templates.
+- Creates `.specify/discovery/azure-context.md`.
+- Records only confirmed information.
+- Keeps unknown values explicit.
+- Asks exactly one business-purpose question first.
+- Does not ask for architecture details in the first question.
+- Does not generate infrastructure code.
+- Does not perform Azure operations.
+- Does not create `.specify/discovery/azure-context.json` prematurely.
+
+After the first response, verify the discovery artifacts:
+
+```powershell
+Get-ChildItem .\.specify\discovery |
+    Select-Object Name, Length, LastWriteTime
+
+Test-Path .\.specify\discovery\azure-context.json
+```
+
+The JSON check must return:
+
+```text
+False
+```
+
+Codex may request project filesystem approval when its sandbox cannot access the
+test repository. Review the exact command and paths and prefer one-time approval
+for smoke testing.
+
+See [Codex Integration](CODEX.md) for complete expected behavior and
+troubleshooting.
+
 ## Hermes Smoke Test
 
 Because Hermes may use a custom `HERMES_HOME`, first install the compatibility skill:

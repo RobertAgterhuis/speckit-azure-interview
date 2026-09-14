@@ -18,6 +18,41 @@ and this project adheres to
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
+## [0.2.0] - 2026-09-14
+
+### Added
+
+- Verified OpenAI Codex CLI integration through the Spec Kit
+  `.agents/skills` convention.
+- Dedicated Codex integration guide covering setup, skill invocation,
+  filesystem approvals, readiness validation, and troubleshooting.
+- Codex behavioral smoke-test procedure and acceptance criteria.
+- Root-level Quick Start covering prerequisites, original GitHub Spec Kit
+  installation, extension installation, integration-specific command notation,
+  readiness validation, and the complete Constitution-to-Converge workflow.
+
+### Changed
+
+- Updated the supported-integration documentation to identify Codex as tested.
+- Added Codex-specific `$speckit-*` invocation examples.
+- Documented the difference between Codex, Claude, canonical-command, and
+  Hermes invocation formats.
+- Updated the extension manifest to version `0.2.0`.
+
+### Verified
+
+- Spec Kit initialized successfully with `--integration codex`.
+- The extension generated
+  `.agents/skills/speckit-azure-interview-run/SKILL.md`.
+- Codex activated `$speckit-azure-interview-run`.
+- Codex created the Markdown discovery artifact without premature JSON.
+- Codex recorded only confirmed facts and preserved unknown values.
+- Codex asked exactly one business-purpose question before architecture
+  discovery.
+- Codex did not generate IaC or perform Azure operations during the interview.
+- Codex support was tested with Codex CLI `0.154.0` and Spec Kit CLI
+  `1.0.7.dev0`.
+
 ## [0.1.1] - 2026-09-13
 
 ### Fixed
@@ -28,6 +63,8 @@ and this project adheres to
   GitHub release archive.
 - Documented the expected untrusted-source confirmation for extensions
   installed outside the official Spec Kit catalog.
+
+## [0.1.0] - 2026-09-13
 
 ### Added
 
@@ -62,6 +99,7 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/releases/tag/v0.1.0
