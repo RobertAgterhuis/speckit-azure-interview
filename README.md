@@ -45,6 +45,30 @@ This extension adds a discovery and readiness stage without modifying or forking
 - Produce deployable infrastructure code only in later Spec Kit stages.
 - Block handoff until the interview satisfies the readiness gate.
 
+## Azure Inventory Discovery
+
+Version 0.4.0 adds optional, subscription-scoped Azure inventory discovery for
+brownfield, migration, and extension scenarios. It uses Azure Resource Graph to
+collect a minimal resource metadata allowlist before or during the architecture
+interview.
+
+The canonical extension command is:
+
+```text
+speckit.azure-interview.inventory
+```
+
+Collection requires explicit approval, one subscription UUID, and the
+`--approve-read-only` safety flag. The generated
+`.specify/discovery/azure-inventory.json` artifact remains `unconfirmed` until
+the user validates its scope and architectural interpretation.
+
+Discovered resources are not automatically approved for reuse or modification
+and are never merged automatically into the confirmed interview context.
+
+See [Azure Inventory Discovery](docs/AZURE-INVENTORY.md) for permissions,
+operation, safeguards, reconciliation, and troubleshooting.
+
 ## Supported Integrations
 
 The extension remains independent of a specific AI provider.
@@ -138,7 +162,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
 Verify the installation:
 
 ```powershell
@@ -300,7 +324,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
 ```
 
 Spec Kit generates the project-local skill at:

@@ -348,7 +348,7 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.3.0.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.4.0.zip" in quick_start_content
     )
 
 
@@ -460,3 +460,39 @@ def test_inventory_documentation_covers_safe_operation() -> None:
 
     for statement in required_statements:
         assert statement in documentation
+
+
+def test_release_documentation_describes_inventory_workflow() -> None:
+    """Release-facing guidance must expose optional inventory discovery."""
+    documentation_requirements = {
+        "README.md": [
+            "Azure Inventory Discovery",
+            "speckit.azure-interview.inventory",
+            "docs/AZURE-INVENTORY.md",
+            "unconfirmed",
+        ],
+        "QUICK-START.md": [
+            "Optional Azure Inventory Discovery",
+            "speckit.azure-interview.inventory",
+            ".specify/discovery/azure-inventory.json",
+            "--approve-read-only",
+        ],
+        "docs/ARCHITECTURE.md": [
+            "azure-inventory.json",
+            "Azure Resource Graph",
+            "unconfirmed",
+            "metadata allowlist",
+        ],
+        "docs/TESTING.md": [
+            "Azure inventory",
+            "68 passed",
+            "metadata allowlist",
+            "live smoke test",
+        ],
+    }
+
+    for relative_path, required_statements in documentation_requirements.items():
+        content = (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
+
+        for statement in required_statements:
+            assert statement in content, f"{relative_path} is missing: {statement}"

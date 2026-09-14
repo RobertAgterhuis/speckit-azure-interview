@@ -251,7 +251,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
 ```
 
 Verify the generated skill:
@@ -344,7 +344,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
 ```
 
 Accept the expected external-source warning only after verifying the archive
@@ -360,7 +360,7 @@ specify extension info azure-interview
 Expected installation output includes:
 
 ```text
-Spec Kit Azure Interview (v0.3.0)
+Spec Kit Azure Interview (v0.4.0)
 1 agent skill(s) auto-registered
 ```
 
@@ -571,3 +571,35 @@ git status --short
 ```
 
 Review every changed and untracked file before committing.
+
+## Azure Inventory Tests
+
+The Azure inventory implementation has a focused suite of **68 passed** tests
+covering:
+
+- Canonical tenant and subscription UUID validation
+- Explicit `--approve-read-only` consent
+- Active Azure context matching
+- Shell-free command execution
+- Windows `az.cmd` fallback
+- Subscription-scoped Azure Resource Graph command construction
+- Resource-response validation
+- Cross-subscription rejection
+- Local metadata allowlist enforcement
+- Unconfirmed evidence generation
+- UTC timestamp normalization
+- JSON Schema and semantic validation
+- Project-local output restrictions
+- Atomic writes and explicit overwrite protection
+- Rejection of existing output before Azure is contacted
+- Complete collection-to-file orchestration
+- Stable success and controlled-error exit codes
+
+The live smoke test used an authenticated Windows Azure CLI session against one
+approved sandbox subscription. It collected seven resources, validated the
+artifact, retained only the eight approved metadata fields, and wrote
+`.specify/discovery/azure-inventory.json` with `evidenceStatus` set to
+`unconfirmed`.
+
+Live testing must use a non-production or explicitly approved subscription.
+Generated inventory evidence must not be committed without review.

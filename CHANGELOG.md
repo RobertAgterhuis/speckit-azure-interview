@@ -10,51 +10,82 @@ and this project adheres to
 
 ### Planned
 
-- Optional read-only Azure inventory discovery.
-- Additional brownfield validation.
+- Additional brownfield topology discovery.
 - Azure Verified Modules recommendation support.
 - Azure Well-Architected Framework review support.
 - Cloud Adoption Framework review support.
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
-## [0.3.0] - 2026-09-14
+## [0.4.0] - 2026-09-14
 
 ### Added
 
-- GitHub Copilot preview integration documentation.
-- No-cost GitHub Copilot structural compatibility test.
-- Optional GitHub Copilot behavioral test procedure.
-- Community testing guidance and behavioral acceptance criteria.
-- Copilot-specific skill discovery and troubleshooting guidance.
+- Optional, subscription-scoped Azure Inventory Discovery command.
+- Read-only Azure CLI and Azure Resource Graph inventory collector.
+- Explicit tenant and subscription UUID validation.
+- Mandatory `--approve-read-only` execution consent.
+- Optional tenant-context enforcement.
+- Project-local `.specify/discovery/azure-inventory.json` evidence artifact.
+- JSON Schema for Azure inventory evidence.
+- Semantic validation for inventory resource counts.
+- Local eight-field resource metadata allowlist.
+- Windows `az.cmd` launcher fallback while retaining `shell=False`.
+- Atomic evidence-file publication.
+- Explicit `--overwrite` behavior for refreshing existing evidence.
+- Dedicated Azure Inventory operator documentation.
+- Interview reconciliation rules for unconfirmed Azure evidence.
+- Comprehensive collector, schema, command, and documentation tests.
 
 ### Changed
 
-- Updated the extension manifest to version `0.3.0`.
-- Updated README and Quick Start integration-support matrices.
-- Added GitHub Copilot `/speckit-*` invocation examples.
-- Updated the architecture to document the `.github/skills` integration model.
-- Updated release archive references to `v0.3.0`.
+- Updated the extension manifest to version `0.4.0`.
+- Added `speckit.azure-interview.inventory` to the extension manifest.
+- Added the inventory schema and collector to packaged extension resources.
+- Updated README, Quick Start, architecture, testing, Codex, and Copilot
+  documentation for the v0.4.0 release.
+- Updated public installation examples to the immutable v0.4.0 archive.
+- Minimized `az account show` output to tenant ID, subscription ID,
+  subscription name, and state.
+- The main interview now detects and reconciles optional inventory evidence.
+
+### Security
+
+- Azure commands execute through argument arrays with `shell=False`.
+- Inventory is limited to one explicitly approved subscription.
+- Cross-subscription resource records are rejected.
+- Unexpected properties, identities, tags, SKUs, plans, zones, extended
+  locations, and other fields are removed before persistence.
+- Existing output is rejected before Azure is contacted unless overwrite was
+  explicitly approved.
+- Inventory evidence remains `unconfirmed` and is never merged automatically
+  into the confirmed interview context.
+- The collector performs no deployments, What-If operations, resource changes,
+  role-assignment changes, policy changes, or secret retrieval.
 
 ### Verified
 
-- Spec Kit initialized successfully with `--integration copilot`.
-- `.specify/integration.json` recorded the Copilot integration.
-- The `v0.2.0` extension archive installed successfully into the Copilot test
-  project.
-- Spec Kit auto-registered one Azure Interview agent skill.
-- Spec Kit generated
-  `.github/skills/speckit-azure-interview-run/SKILL.md`.
-- The generated skill contained the correct name, description, and complete
-  interview instructions.
+- Live Windows smoke test completed against one approved sandbox subscription.
+- The collector validated the active tenant and subscription.
+- Windows safely retried the `az.cmd` launcher without enabling a shell.
+- Azure Resource Graph returned seven resources.
+- The local metadata allowlist retained only the eight approved fields.
+- The output schema and semantic checks passed before artifact creation.
+- The artifact recorded `readOnly: true` and
+  `evidenceStatus: unconfirmed`.
+- The focused Azure inventory suite passed 68 tests.
+- The complete repository suite passed 107 tests before final release updates.
 
 ### Known Limitations
 
-- GitHub Copilot interview behavior has not yet been tested by the project
-  maintainer because a paid Copilot runtime was not available.
-- Copilot support is classified as preview until behavioral acceptance criteria
-  are completed successfully.
-- Community behavioral testing is explicitly requested.
+- Baseline discovery collects resource metadata only; it does not yet interpret
+  network topology, private DNS relationships, policy compliance, diagnostic
+  settings, or resource configuration payloads.
+- Resource ownership, purpose, environment, lifecycle intent, and modification
+  permission still require human confirmation.
+- Discovery is currently limited to one subscription per invocation.
+- Azure CLI authentication and Azure Resource Graph access must already be
+  available on the operator workstation.
 
 ## [0.2.0] - 2026-09-14
 
@@ -137,7 +168,8 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.0...v0.1.1
