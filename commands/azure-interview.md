@@ -660,6 +660,53 @@ Before relying on repository evidence:
 5. Do not treat examples, generated output, test fixtures, or commented code as
    active production configuration without confirmation.
 
+## Azure Inventory Evidence Reconciliation
+
+The optional inventory artifact is:
+
+```text
+.specify/discovery/azure-inventory.json
+```
+
+When this artifact exists:
+
+1. Read it before asking Azure estate, existing-resource, network, DNS,
+   identity, security, governance, operations, or observability questions that
+   the inventory may partially answer.
+2. Validate its structure against the installed
+   `templates/azure-inventory.schema.json` contract before relying on it.
+3. Verify that `evidenceStatus` is `unconfirmed`.
+4. Verify that `source.readOnly` is `true`.
+5. Verify the recorded tenant ID, subscription ID, subscription name, and
+   collection timestamp with the user.
+6. Treat every inventory record as `unconfirmed` until the user confirms its
+   relevance and interpretation.
+7. Record a confirmed discovered fact with source `azure` only after the user
+   approves the interpretation.
+8. Never copy inventory evidence automatically into `azure-context.json`.
+9. Never infer ownership, purpose, environment, criticality, lifecycle intent,
+   modification permission, or deployment scope from a resource name.
+10. Confirm lifecycle intent for every relevant discovered resource as
+    discover, reuse, create, migrate, or replace.
+11. Confirm modification permission separately for every resource proposed for
+    reuse, migration, replacement, or integration.
+12. Preserve irrelevant discovered resources only in the inventory artifact;
+    do not copy them into the interview context.
+13. When inventory evidence conflicts with user, repository, documentation, or
+    policy evidence, present the conflict and ask which source is authoritative.
+14. Treat stale inventory as potentially inaccurate and ask whether a refreshed
+    read-only collection is required.
+15. Never run or refresh inventory discovery without the separate explicit
+    approval required by the inventory command.
+
+The absence of `azure-inventory.json` is not an error. Inventory discovery is
+optional and must not block greenfield interviews when Azure discovery is not
+needed.
+
+Inventory collection does not satisfy the readiness gate by itself. Ownership,
+lifecycle intent, modification permission, architectural meaning, and
+prohibited changes still require confirmation.
+
 ## Read-Only Azure Discovery
 
 Azure discovery is optional and never implied by invoking this command.

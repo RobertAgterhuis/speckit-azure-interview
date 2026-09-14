@@ -418,3 +418,22 @@ def test_quick_start_identifies_copilot_as_preview() -> None:
     assert "--integration copilot" in quick_start_content
     assert ".github/skills/speckit-azure-interview-run/SKILL.md" in quick_start_content
     assert "Preview — structurally verified; behavioral testing requested" in quick_start_content
+
+
+def test_interview_reconciles_unconfirmed_inventory_evidence() -> None:
+    """The interview must reconcile inventory without auto-confirming it."""
+    command_content = (REPOSITORY_ROOT / "commands" / "azure-interview.md").read_text(
+        encoding="utf-8"
+    )
+
+    required_statements = [
+        ".specify/discovery/azure-inventory.json",
+        "Treat every inventory record as `unconfirmed`",
+        "Never copy inventory evidence automatically",
+        "Confirm lifecycle intent",
+        "Confirm modification permission",
+        "source `azure`",
+    ]
+
+    for statement in required_statements:
+        assert statement in command_content
