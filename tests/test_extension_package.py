@@ -50,16 +50,20 @@ def test_required_repository_files_exist() -> None:
         "docs/CODEX.md",
         "docs/COPILOT.md",
         "docs/AZURE-INVENTORY.md",
+        "docs/AZURE-DESIGN.md",
         "LICENSE",
         "CHANGELOG.md",
         "requirements-dev.txt",
         "commands/azure-interview.md",
         "commands/azure-inventory.md",
+        "commands/azure-design.md",
         "templates/azure-context-template.md",
         "templates/azure-context.schema.json",
         "templates/azure-inventory.schema.json",
+        "templates/azure-design.schema.json",
         "scripts/python/validate_context.py",
         "scripts/python/collect_azure_inventory.py",
+        "scripts/python/generate_azure_design.py",
         "requirements-runtime.txt",
         ".extensionignore",
         "scripts/powershell/Install-HermesSkillAdapter.ps1",
@@ -118,7 +122,7 @@ def test_command_is_namespaced_and_exists(
     extension_id = manifest["extension"]["id"]
     commands = manifest["provides"]["commands"]
 
-    assert len(commands) == 2
+    assert len(commands) == 3
 
     for command in commands:
         match = COMMAND_NAME_PATTERN.fullmatch(command["name"])
@@ -160,7 +164,7 @@ def test_declared_templates_are_valid_and_exist(
     templates = manifest["provides"]["templates"]
     template_names: set[str] = set()
 
-    assert len(templates) == 3
+    assert len(templates) == 4
 
     for template in templates:
         name = template["name"]
@@ -296,7 +300,7 @@ def test_declared_scripts_are_valid_and_exist(
         "python",
     }
 
-    assert len(scripts) == 3
+    assert len(scripts) == 4
 
     for script in scripts:
         name = script["name"]
@@ -348,7 +352,7 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.4.0.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.5.0.zip" in quick_start_content
     )
 
 
@@ -469,6 +473,7 @@ def test_release_documentation_describes_inventory_workflow() -> None:
             "Azure Inventory Discovery",
             "speckit.azure-interview.inventory",
             "docs/AZURE-INVENTORY.md",
+            "docs/AZURE-DESIGN.md",
             "unconfirmed",
         ],
         "QUICK-START.md": [
@@ -493,6 +498,96 @@ def test_release_documentation_describes_inventory_workflow() -> None:
 
     for relative_path, required_statements in documentation_requirements.items():
         content = (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
+
+        for statement in required_statements:
+            assert statement in content, f"{relative_path} is missing: {statement}"
+
+
+def test_design_command_enforces_reviewable_intended_state() -> None:
+    """Design generation remains reviewable, intended, and non-deploying."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-design.md"
+    command_content = command_path.read_text(encoding="utf-8")
+
+    required_statements = [
+        ".specify/discovery/azure-context.json",
+        ".specify/design/azure-design-model.json",
+        ".specify/design/azure-design-overview.md",
+        ".specify/design/azure-design-overview.svg",
+        ".specify/design/azure-design-overview.drawio",
+        "designStatus: intended",
+        "reviewStatus: unreviewed",
+        "generate_azure_design.py",
+        "--overwrite",
+        "explicit human approval",
+        "exactly one next review or confirmation question",
+    ]
+
+    for statement in required_statements:
+        assert statement in command_content
+
+    prohibited_claims = [
+        "designStatus: deployed",
+        "reviewStatus: approved",
+        "automatically approve",
+        "start deployment automatically",
+    ]
+
+    for statement in prohibited_claims:
+        assert statement not in command_content
+
+
+def test_release_documentation_describes_intended_design_workflow() -> None:
+    """Release guidance must expose intended-design generation and review."""
+    documentation_requirements = {
+        "README.md": [
+            "Azure Intended Design",
+            "speckit.azure-interview.design",
+            "docs/AZURE-DESIGN.md",
+            "reviewStatus: unreviewed",
+        ],
+        "QUICK-START.md": [
+            "Generate and Review the Intended Design",
+            "speckit.azure-interview.design",
+            "azure-design-overview.drawio",
+            "--overwrite",
+        ],
+        "docs/ARCHITECTURE.md": [
+            "Intended-Design Evidence Layer",
+            "azure-design-model.json",
+            "explicit human approval",
+            "As-built verification",
+        ],
+        "docs/TESTING.md": [
+            "Azure Intended-Design Tests",
+            "test_generate_azure_design.py",
+            "Mermaid",
+            "Draw.io",
+        ],
+        "docs/CODEX.md": [
+            "Generate the Intended Azure Design",
+            "speckit.azure-interview.design",
+            "intended",
+            "unreviewed",
+        ],
+        "docs/COPILOT.md": [
+            "Generate the Intended Azure Design",
+            "speckit-azure-interview-design",
+            "designStatus: intended",
+            "reviewStatus: unreviewed",
+        ],
+        "docs/AZURE-DESIGN.md": [
+            "Azure Intended Design",
+            "azure-design-model.json",
+            "azure-design-overview.svg",
+            "azure-design-overview.drawio",
+            "Future As-Built Verification",
+        ],
+    }
+
+    for relative_path, required_statements in documentation_requirements.items():
+        content = (REPOSITORY_ROOT / relative_path).read_text(
+            encoding="utf-8",
+        )
 
         for statement in required_statements:
             assert statement in content, f"{relative_path} is missing: {statement}"

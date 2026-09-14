@@ -184,11 +184,11 @@ Expected values include:
 
 ## Install Spec Kit Azure Interview
 
-Install the immutable `v0.4.0` release archive:
+Install the immutable `v0.5.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because this extension is installed
@@ -542,7 +542,7 @@ Reinstall the released extension only after reviewing the target project:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip `
     --force
 ```
 
@@ -580,3 +580,28 @@ Infrastructure implementation belongs to the later
 - [Adding agent skills for GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
 - [Original GitHub Spec Kit](https://github.com/github/spec-kit)
 - [Azure Verified Modules Spec Kit guidance](https://azure.github.io/Azure-Verified-Modules/experimental/ai-assisted-sol-dev/spec-kit/)
+
+## Generate the Intended Azure Design
+
+After the interview is complete and the machine-readable context is validated,
+run:
+
+    /speckit.azure-interview.design
+
+GitHub Copilot generates the installed skill:
+
+    speckit-azure-interview-design
+
+The design command produces a validated intended-state model plus Markdown,
+Mermaid, SVG, and editable Draw.io review artifacts.
+
+The initial status is `designStatus: intended` and
+`reviewStatus: unreviewed`. Generation does not approve the design and does not
+prove deployed Azure state.
+
+Review planned resources, reused resources, ownership boundaries, networking,
+private endpoints, diagnostics, and dependencies before implementation.
+
+Use `--overwrite` only after explicit user approval.
+
+See [Azure Intended Design](AZURE-DESIGN.md) for the complete workflow.

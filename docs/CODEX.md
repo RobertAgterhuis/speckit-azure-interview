@@ -114,7 +114,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is installed
@@ -475,3 +475,25 @@ Open an issue:
 Start a discussion:
 
 <https://github.com/RobertAgterhuis/speckit-azure-interview/discussions>
+
+## Generate the Intended Azure Design
+
+After the interview is complete and `azure-context.json` is validated, invoke:
+
+    /speckit.azure-interview.design
+
+The command creates the JSON design model, Markdown and Mermaid overview,
+standalone SVG, and editable Draw.io diagram under `.specify/design`.
+
+Treat the generated design as `intended` and `unreviewed`. Do not describe it as
+approved or deployed.
+
+Review the design with the user before specification or implementation. Preserve
+confirmed ownership, existing-resource lifecycle intent, modification
+boundaries, and unresolved assumptions.
+
+Only pass `--overwrite` after the user explicitly approves replacement of the
+complete design artifact set.
+
+See [Azure Intended Design](AZURE-DESIGN.md) for the full review and safety
+workflow.

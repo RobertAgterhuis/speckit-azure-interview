@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RobertAgterhuis/speckit-azure-interview/templates/azure-design.schema.json",
+  "title": "Azure Intended Design",
+  "description": "Machine-readable intended-state Azure architecture generated from a completed Azure interview.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "designStatus",
+    "reviewStatus",
+    "generatedAt",
+    "source",
+    "workload",
+    "azureScope",
+    "architecture"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "designStatus": {
+      "const": "intended"
+    },
+    "reviewStatus": {
+      "type": "string",
+      "enum": [
+        "unreviewed",
+        "approved",
+        "rejected"
+      ]
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "workload": {
+      "$ref": "#/$defs/workload"
+    },
+    "azureScope": {
+      "$ref": "#/$defs/azureScope"
+    },
+    "architecture": {
+      "$ref": "#/$defs/architecture"
+    }
+  },
+  "$defs": {
+    "nullableString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "schemaVersion",
+        "interviewUpdatedAt",
+        "confirmedBy"
+      ],
+      "properties": {
+        "type": {
+          "const": "azure-interview-context"
+        },
+        "schemaVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interviewUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "confirmedBy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "purpose",
+        "lifecycle",
+        "criticality",
+        "environments"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "criticality": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "subscription": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment",
+        "subscriptionId"
+      ],
+      "properties": {
+        "environment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "azureScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenantId",
+        "managementGroupId",
+        "subscriptions",
+        "regions"
+      ],
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "managementGroupId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "subscriptions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/subscription"
+          }
+        },
+        "regions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "propertyValue": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      ]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "resourceType",
+        "name",
+        "state",
+        "owner",
+        "modifiable",
+        "resourceId",
+        "properties"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "network",
+            "resource"
+          ]
+        },
+        "resourceType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "existing",
+            "planned"
+          ]
+        },
+        "owner": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "modifiable": {
+          "type": "boolean"
+        },
+        "resourceId": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/propertyValue"
+          }
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "source",
+        "target",
+        "label",
+        "state",
+        "owner"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+      "type": {
+        "type": "string",
+        "enum": [
+          "peered-with",
+          "contains",
+          "egress-through",
+          "dns-resolution-through",
+          "private-endpoint-through",
+          "diagnostics-to"
+        ]
+      },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "existing",
+            "planned"
+          ]
+        },
+        "owner": {
+          "$ref": "#/$defs/nullableString"
+        }
+      }
+    },
+    "architecture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nodes",
+        "relationships"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relationship"
+          }
+        }
+      }
+    }
+  }
+}

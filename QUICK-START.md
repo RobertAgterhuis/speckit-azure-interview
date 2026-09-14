@@ -239,11 +239,11 @@ review the affected files before using `--force`.
 
 ## 5. Install Spec Kit Azure Interview
 
-Install the immutable `v0.4.0` release archive:
+Install the immutable `v0.5.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is not yet
@@ -265,7 +265,7 @@ specify extension info azure-interview
 Expected extension:
 
 ```text
-Spec Kit Azure Interview (v0.4.0)
+Spec Kit Azure Interview (v0.5.0)
 ```
 
 Expected command:
@@ -779,7 +779,7 @@ Correct:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
 ```
 
 The `--from` value must point to a ZIP, tar.gz, or tgz archive.
@@ -845,3 +845,36 @@ workload interview.
 - [Codex Integration](docs/CODEX.md)
 - [GitHub Copilot Integration](docs/COPILOT.md)
 - [Hermes Agent Integration](docs/HERMES.md)
+
+## Generate and Review the Intended Design
+
+After the Azure architecture interview is complete and
+`.specify/discovery/azure-context.json` has been validated, run:
+
+    /speckit.azure-interview.design
+
+The command generates:
+
+- `.specify/design/azure-design-model.json`;
+- `.specify/design/azure-design-overview.md`;
+- `.specify/design/azure-design-overview.svg`;
+- `.specify/design/azure-design-overview.drawio`.
+
+The JSON model is the machine-readable design contract. The Markdown, SVG, and
+Draw.io files provide human-reviewable visualizations of the same architecture.
+
+A newly generated design uses:
+
+    designStatus: intended
+    reviewStatus: unreviewed
+
+Review the design before continuing to specification or implementation. Confirm
+planned resources, reused resources, ownership boundaries, hub peering, central
+egress, private DNS, private endpoints, and diagnostic settings.
+
+To replace an existing set after explicit approval, run:
+
+    /speckit.azure-interview.design --overwrite
+
+See [Azure Intended Design](docs/AZURE-DESIGN.md) for the complete workflow and
+security boundaries.
