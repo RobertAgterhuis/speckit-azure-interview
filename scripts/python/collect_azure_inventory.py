@@ -3,8 +3,14 @@
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import subprocess
+import tempfile
+from copy import deepcopy
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -13,6 +19,78 @@ Resources
 | project id, name, type, location, resourceGroup, subscriptionId, kind, managedBy
 | order by type asc, name asc
 """.strip()
+
+
+def parse_arguments(
+    arguments: list[str] | None = None,
+) -> argparse.Namespace:
+    """Parse explicit scope, consent, and output arguments."""
+    parser = argparse.ArgumentParser(
+        description=(
+            "Collect subscription-scoped, read-only Azure inventory "
+            "evidence through Azure Resource Graph."
+        )
+    )
+    parser.add_argument(
+        "--subscription",
+        required=True,
+        type=validate_azure_identifier,
+        help="Approved Azure subscription ID as a canonical UUID.",
+    )
+    parser.add_argument(
+        "--tenant",
+        type=validate_azure_identifier,
+        help=("Optional approved Microsoft Entra tenant ID as a canonical UUID."),
+    )
+    parser.add_argument(
+        "--approve-read-only",
+        required=True,
+        action="store_true",
+        help=("Confirm approval to run read-only Azure account and Resource Graph commands."),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(".specify/discovery/azure-inventory.json"),
+        help=("Output path. Defaults to .specify/discovery/azure-inventory.json."),
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help=("Explicitly replace an existing Azure inventory evidence file."),
+    )
+
+    return parser.parse_args(arguments)
+
+
+def validate_output_path(
+    output_path: Path,
+    *,
+    project_root: Path,
+) -> Path:
+    """Resolve a JSON output path inside a Spec Kit discovery directory."""
+    resolved_project_root = project_root.resolve()
+    specify_directory = resolved_project_root / ".specify"
+
+    if not specify_directory.is_dir():
+        raise ValueError(f"Current directory is not a Spec Kit project: {resolved_project_root}")
+
+    discovery_directory = (specify_directory / "discovery").resolve()
+
+    if output_path.is_absolute():
+        resolved_output_path = output_path.resolve()
+    else:
+        resolved_output_path = (resolved_project_root / output_path).resolve()
+
+    if (
+        not resolved_output_path.is_relative_to(discovery_directory)
+        or resolved_output_path.suffix.lower() != ".json"
+    ):
+        raise ValueError(
+            "Inventory output must remain in .specify/discovery and use a JSON file extension."
+        )
+
+    return resolved_output_path
 
 
 def validate_azure_identifier(identifier: str) -> str:
@@ -169,6 +247,94 @@ def extract_resource_records(
         records.append(dict(record))
 
     return records
+
+
+def build_inventory_document(
+    account: dict[str, str],
+    resources: list[dict[str, Any]],
+    *,
+    collected_at: datetime,
+) -> dict[str, Any]:
+    """Build an unconfirmed, read-only Azure inventory evidence document."""
+    if collected_at.tzinfo is None or collected_at.utcoffset() is None:
+        raise ValueError("Inventory collection timestamp must be timezone-aware.")
+
+    collected_at_utc = collected_at.astimezone(timezone.utc)
+    collected_at_value = collected_at_utc.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    copied_account = deepcopy(account)
+    copied_resources = deepcopy(resources)
+
+    return {
+        "schemaVersion": "1.0",
+        "evidenceStatus": "unconfirmed",
+        "collectedAt": collected_at_value,
+        "source": {
+            "type": "azure",
+            "provider": "Azure Resource Graph",
+            "readOnly": True,
+            "query": RESOURCE_INVENTORY_QUERY,
+        },
+        "scope": copied_account,
+        "resourceCount": len(copied_resources),
+        "resources": copied_resources,
+    }
+
+
+def write_inventory_document(
+    document: dict[str, Any],
+    output_path: Path,
+    *,
+    overwrite: bool,
+) -> None:
+    """Atomically write inventory evidence without implicit replacement."""
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    if output_path.exists() and not overwrite:
+        raise FileExistsError(
+            f"Inventory evidence already exists: {output_path}. "
+            "Use --overwrite to replace it explicitly."
+        )
+
+    temporary_path: Path | None = None
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            dir=output_path.parent,
+            prefix=f".{output_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary_file:
+            temporary_path = Path(temporary_file.name)
+            json.dump(
+                document,
+                temporary_file,
+                ensure_ascii=False,
+                indent=2,
+            )
+            temporary_file.write("\n")
+            temporary_file.flush()
+            os.fsync(temporary_file.fileno())
+
+        if overwrite:
+            os.replace(temporary_path, output_path)
+        else:
+            try:
+                os.link(temporary_path, output_path)
+            except FileExistsError as exception:
+                raise FileExistsError(
+                    f"Inventory evidence already exists: {output_path}. "
+                    "Use --overwrite to replace it explicitly."
+                ) from exception
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def build_account_show_command() -> list[str]:
