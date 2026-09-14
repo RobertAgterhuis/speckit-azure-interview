@@ -166,16 +166,37 @@ def execute_json_command(
     runner: Any = subprocess.run,
 ) -> dict[str, Any]:
     """Execute an Azure CLI command without a shell and return a JSON object."""
-    try:
-        completed_process = runner(
-            command,
+
+    def run_process(
+        execution_command: list[str],
+    ) -> Any:
+        return runner(
+            execution_command,
             capture_output=True,
             check=False,
             shell=False,
             text=True,
         )
-    except FileNotFoundError as exception:
-        raise RuntimeError("Azure CLI executable 'az' was not found.") from exception
+
+    try:
+        completed_process = run_process(command)
+    except FileNotFoundError:
+        if not command or command[0] != "az":
+            raise RuntimeError("Azure CLI executable 'az' was not found.") from None
+
+        windows_command = [
+            "az.cmd",
+            *command[1:],
+        ]
+
+        try:
+            completed_process = run_process(windows_command)
+        except FileNotFoundError:
+            raise RuntimeError("Azure CLI executable 'az' was not found.") from None
+        except OSError as exception:
+            raise RuntimeError(
+                f"Azure CLI command could not be started: {exception}"
+            ) from exception
     except OSError as exception:
         raise RuntimeError(f"Azure CLI command could not be started: {exception}") from exception
 

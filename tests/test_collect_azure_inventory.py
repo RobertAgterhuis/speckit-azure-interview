@@ -1265,3 +1265,34 @@ def test_main_reports_controlled_execution_error(
     assert exit_code == collector_module.EXIT_EXECUTION_ERROR
     assert captured.out == ""
     assert "Spec Kit project" in captured.err
+
+
+def test_execute_json_command_retries_windows_azure_cli_wrapper(
+    collector_module: ModuleType,
+) -> None:
+    """The executor safely retries az.cmd when the az launcher is unavailable."""
+    observed_commands: list[list[str]] = []
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        observed_commands.append(command)
+
+        if command[0] == "az":
+            raise FileNotFoundError
+
+        return SimpleNamespace(
+            returncode=0,
+            stdout='{"state": "Enabled"}',
+            stderr="",
+        )
+
+    result = collector_module.execute_json_command(
+        collector_module.build_account_show_command(),
+        runner=fake_runner,
+    )
+
+    assert result == {"state": "Enabled"}
+    assert observed_commands[0][0] == "az"
+    assert observed_commands[1][0] == "az.cmd"
