@@ -47,6 +47,7 @@ def test_required_repository_files_exist() -> None:
         "extension.yml",
         "README.md",
         "QUICK-START.md",
+        "docs/CODEX.md",
         "LICENSE",
         "CHANGELOG.md",
         "requirements-dev.txt",
@@ -321,5 +322,45 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.1.1.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.2.0.zip" in quick_start_content
     )
+
+
+def test_codex_documentation_describes_generated_skill() -> None:
+    """Codex documentation must describe the tested Spec Kit integration."""
+    codex_documentation_path = REPOSITORY_ROOT / "docs" / "CODEX.md"
+    codex_documentation = codex_documentation_path.read_text(encoding="utf-8")
+
+    required_statements = [
+        "specify init --here --integration codex --script ps",
+        ".agents/skills/speckit-azure-interview-run/SKILL.md",
+        "$speckit-azure-interview-run",
+        "What specific business capability or problem must this workload address?",
+        ".specify/discovery/azure-context.md",
+        ".specify/discovery/azure-context.json",
+    ]
+
+    for statement in required_statements:
+        assert statement in codex_documentation
+
+
+def test_release_versions_are_consistent(
+    manifest: dict[str, Any],
+) -> None:
+    """Release-facing files must reference the current extension version."""
+    expected_version = manifest["extension"]["version"]
+    expected_tag = f"v{expected_version}"
+
+    release_facing_files = [
+        REPOSITORY_ROOT / "README.md",
+        REPOSITORY_ROOT / "QUICK-START.md",
+        REPOSITORY_ROOT / "docs" / "CODEX.md",
+        REPOSITORY_ROOT / "docs" / "TESTING.md",
+    ]
+
+    for file_path in release_facing_files:
+        content = file_path.read_text(encoding="utf-8")
+        assert expected_tag in content, (
+            f"{file_path.relative_to(REPOSITORY_ROOT)} does not reference "
+            f"the current release tag {expected_tag}"
+        )

@@ -197,6 +197,65 @@ flowchart TD
 
 The extension source remains agent-neutral.
 
+### Codex integration
+
+Spec Kit generates the extension command as a project-local Codex-compatible
+skill:
+
+```text
+.agents/skills/speckit-azure-interview-run/SKILL.md
+```
+
+The Codex integration uses the shared `.agents/skills` convention rather than a
+`.codex/skills` directory.
+
+```mermaid
+flowchart TD
+    E["Extension command"] --> K["Spec Kit integration"]
+    K --> S[".agents/skills"]
+    S --> I["speckit-azure-interview-run"]
+    I --> C["Codex invocation with $skill"]
+```
+
+The user invokes the generated skill with:
+
+```text
+$speckit-azure-interview-run
+```
+
+Codex support does not require a separate adapter because the current Spec Kit
+integration generates the project-local skill directly.
+
+Spec Kit owns the integration-specific representation. This extension remains
+responsible for:
+
+- Provider-independent interview instructions
+- The Markdown discovery template
+- The machine-readable JSON Schema
+- Schema and semantic validation
+- Readiness-gate behavior
+
+Codex filesystem approvals remain outside the extension boundary. The user must
+review and authorize requested project access.
+
+The extension does not:
+
+- Grant Codex filesystem access.
+- Broaden Codex sandbox permissions.
+- Persist Codex approval decisions.
+- Access files outside the consuming project by design.
+- Authorize Azure access or deployment operations.
+
+During the interview, normal write access is limited to:
+
+```text
+.specify/discovery/azure-context.md
+.specify/discovery/azure-context.json
+```
+
+The JSON artifact is created only when the interview can pass the readiness
+gate.
+
 ### Hermes custom-home compatibility
 
 Spec Kit may generate Hermes skills under:

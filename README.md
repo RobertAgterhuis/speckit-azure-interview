@@ -52,6 +52,7 @@ The extension is designed to remain independent of a specific AI provider.
 It has been tested with:
 
 - Claude Code
+- OpenAI Codex CLI
 - Hermes Agent with a local Ollama model
 
 It can also be installed into other Spec Kit integrations that support generated skills or commands, including Codex and GitHub Copilot.
@@ -127,7 +128,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.1.1.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.2.0.zip
 Verify the installation:
 
 ```powershell
@@ -165,6 +166,115 @@ The generated skill name is derived from the extension command:
 ```text
 speckit.azure-interview.run
 ```
+
+## Codex CLI Usage
+
+Initialize Spec Kit for Codex from the consuming project:
+
+```powershell
+specify init --here --integration codex --script ps
+```
+
+The current Spec Kit Codex integration generates project-local skills under:
+
+```text
+.agents/skills/
+```
+
+Verify the Azure interview skill:
+
+```powershell
+Test-Path `
+    .\.agents\skills\speckit-azure-interview-run\SKILL.md
+```
+
+Expected result:
+
+```text
+True
+```
+
+Start Codex from the consuming project root:
+
+```powershell
+codex
+```
+
+Establish the project constitution once:
+
+```text
+$speckit-constitution
+
+Define the governing principles for an AVM-based Azure IaC solution.
+```
+
+Then start the Azure architecture interview:
+
+```text
+$speckit-azure-interview-run
+
+We need an AVM-based Bicep solution for a production workload that must integrate with an existing Azure landing zone. Start a new Azure architecture interview.
+```
+
+Codex should explicitly acknowledge that it is using:
+
+```text
+speckit-azure-interview-run
+```
+
+During the initial interview, Codex should create or update only:
+
+```text
+.specify/discovery/azure-context.md
+```
+
+It must not create:
+
+```text
+.specify/discovery/azure-context.json
+```
+
+until all required values are confirmed and the readiness gate can pass.
+
+Codex may request approval when its sandbox cannot access the project files.
+Review the exact command and target paths before approving it. Prefer one-time
+approval during initial testing.
+
+The interview must not:
+
+- Access Azure without explicit approval.
+- Retrieve secrets.
+- Generate Bicep or Terraform.
+- Run a deployment.
+- Run an Azure What-If operation.
+- Invent resource identifiers.
+- Ask multiple independent questions in one response.
+- Mark an incomplete interview as ready for specification.
+
+After the interview is complete, validate the generated JSON:
+
+```powershell
+python .\.specify\extensions\azure-interview\scripts\python\validate_context.py `
+    .\.specify\discovery\azure-context.json `
+    --schema .\.specify\extensions\azure-interview\templates\azure-context.schema.json
+```
+
+After successful validation, continue with the Codex form of the core Spec Kit
+skills:
+
+```text
+$speckit-specify
+$speckit-clarify
+$speckit-plan
+$speckit-checklist
+$speckit-tasks
+$speckit-analyze
+$speckit-implement
+$speckit-converge
+```
+
+See [Codex Integration](docs/CODEX.md) for complete setup, expected behavior,
+approval guidance, validation, and troubleshooting.
 
 ## Hermes Agent Usage
 
@@ -296,6 +406,7 @@ See [Testing Guide](docs/TESTING.md) for integration and smoke-test procedures.
 │   └── azure-interview.md
 ├── docs/
 │   ├── ARCHITECTURE.md
+│   ├── CODEX.md
 │   ├── HERMES.md
 │   └── TESTING.md
 ├── scripts/
@@ -331,6 +442,7 @@ See [Testing Guide](docs/TESTING.md) for integration and smoke-test procedures.
 
 - [Quick Start](QUICK-START.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Codex Integration](docs/CODEX.md)
 - [Testing Guide](docs/TESTING.md)
 - [Hermes Integration](docs/HERMES.md)
 - [Contributing](CONTRIBUTING.md)
@@ -341,7 +453,9 @@ See [Testing Guide](docs/TESTING.md) for integration and smoke-test procedures.
 
 The project is under active development.
 
-Version `0.1.0` establishes the initial interview workflow, output templates, JSON Schema, validation utility, package tests, CI checks, and Hermes compatibility support.
+Version `0.2.0` provides:
+- Establishes the initial interview workflow, output templates, JSON Schema, validation utility, package tests, CI checks, and Hermes compatibility support.
+- Tested Claude Code, OpenAI Codex CLI, and Hermes Agent support.
 
 ## Contributing
 
