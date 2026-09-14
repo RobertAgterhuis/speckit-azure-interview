@@ -184,11 +184,11 @@ Expected values include:
 
 ## Install Spec Kit Azure Interview
 
-Install the immutable `v0.3.0` release archive:
+Install the immutable `v0.4.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because this extension is installed
@@ -542,7 +542,7 @@ Reinstall the released extension only after reviewing the target project:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip `
     --force
 ```
 

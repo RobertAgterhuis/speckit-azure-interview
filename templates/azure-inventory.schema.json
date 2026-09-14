@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RobertAgterhuis/speckit-azure-interview/schemas/azure-inventory.schema.json",
+  "title": "Spec Kit Azure Inventory Evidence",
+  "description": "Read-only Azure inventory evidence awaiting human confirmation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evidenceStatus",
+    "collectedAt",
+    "source",
+    "scope",
+    "resourceCount",
+    "resources"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "evidenceStatus": {
+      "const": "unconfirmed"
+    },
+    "collectedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "provider",
+        "readOnly",
+        "query"
+      ],
+      "properties": {
+        "type": {
+          "const": "azure"
+        },
+        "provider": {
+          "const": "Azure Resource Graph"
+        },
+        "readOnly": {
+          "const": true
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subscriptionId",
+        "subscriptionName",
+        "tenantId"
+      ],
+      "properties": {
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "subscriptionName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenantId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "resourceCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resource"
+      }
+    }
+  },
+  "$defs": {
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "type",
+        "location",
+        "resourceGroup",
+        "subscriptionId",
+        "kind",
+        "managedBy"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^/subscriptions/[0-9a-fA-F-]+/",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "type": "string"
+        },
+        "resourceGroup": {
+          "type": "string"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kind": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "managedBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

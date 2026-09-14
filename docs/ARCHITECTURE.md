@@ -376,3 +376,32 @@ The extension uses:
 
 Future Spec Kit changes should be handled by updating the extension compatibility
 range and adapter code rather than modifying Spec Kit Core.
+
+## Optional Azure Inventory Evidence Layer
+
+The Azure inventory capability adds a separate evidence layer without changing
+the lifecycle of `azure-context.md` or `azure-context.json`.
+
+```text
+Approved tenant and subscription
+    -> Azure CLI context validation
+    -> Azure Resource Graph query
+    -> Local metadata allowlist
+    -> JSON Schema and semantic validation
+    -> .specify/discovery/azure-inventory.json
+    -> Human reconciliation during the interview
+```
+
+The collector queries one subscription and retains only resource ID, name,
+type, location, resource group, subscription ID, kind, and `managedBy`. The
+local metadata allowlist removes unexpected properties, identities, tags, SKUs,
+plans, zones, extended locations, and other fields before persistence.
+
+The inventory artifact is always marked `unconfirmed`. It is evidence, not an
+architecture decision or deployment contract. The interview must confirm
+scope, relevance, ownership, lifecycle intent, modification permission, and
+prohibited changes before recording Azure-sourced facts in the context.
+
+The layer is optional, read-only, provider-independent at the command level,
+and additive to Spec Kit Core. It does not deploy resources, execute What-If,
+retrieve secret values, or alter the specification workflow.

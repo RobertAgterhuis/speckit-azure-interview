@@ -49,13 +49,17 @@ def test_required_repository_files_exist() -> None:
         "QUICK-START.md",
         "docs/CODEX.md",
         "docs/COPILOT.md",
+        "docs/AZURE-INVENTORY.md",
         "LICENSE",
         "CHANGELOG.md",
         "requirements-dev.txt",
         "commands/azure-interview.md",
+        "commands/azure-inventory.md",
         "templates/azure-context-template.md",
         "templates/azure-context.schema.json",
+        "templates/azure-inventory.schema.json",
         "scripts/python/validate_context.py",
+        "scripts/python/collect_azure_inventory.py",
         "requirements-runtime.txt",
         ".extensionignore",
         "scripts/powershell/Install-HermesSkillAdapter.ps1",
@@ -114,7 +118,7 @@ def test_command_is_namespaced_and_exists(
     extension_id = manifest["extension"]["id"]
     commands = manifest["provides"]["commands"]
 
-    assert len(commands) == 1
+    assert len(commands) == 2
 
     for command in commands:
         match = COMMAND_NAME_PATTERN.fullmatch(command["name"])
@@ -128,23 +132,25 @@ def test_command_is_namespaced_and_exists(
         assert command_path.is_file(), f"Command file does not exist: {command['file']}"
 
 
-def test_command_contains_valid_frontmatter(
+def test_commands_contain_valid_frontmatter(
     manifest: dict[str, Any],
 ) -> None:
-    """Command Markdown must contain valid YAML frontmatter."""
-    command = manifest["provides"]["commands"][0]
-    command_path = REPOSITORY_ROOT / command["file"]
-    content = command_path.read_text(encoding="utf-8")
+    """Command Markdown files must contain valid YAML frontmatter."""
+    commands = manifest["provides"]["commands"]
 
-    assert content.startswith("---\n")
+    for command in commands:
+        command_path = REPOSITORY_ROOT / command["file"]
+        content = command_path.read_text(encoding="utf-8")
 
-    parts = content.split("---", maxsplit=2)
-    assert len(parts) == 3
+        assert content.startswith("---\n")
 
-    frontmatter = yaml.safe_load(parts[1])
-    assert isinstance(frontmatter, dict)
-    assert frontmatter.get("description")
-    assert "$ARGUMENTS" in content
+        parts = content.split("---", maxsplit=2)
+        assert len(parts) == 3
+
+        frontmatter = yaml.safe_load(parts[1])
+        assert isinstance(frontmatter, dict)
+        assert frontmatter.get("description")
+        assert "$ARGUMENTS" in content
 
 
 def test_declared_templates_are_valid_and_exist(
@@ -154,7 +160,7 @@ def test_declared_templates_are_valid_and_exist(
     templates = manifest["provides"]["templates"]
     template_names: set[str] = set()
 
-    assert len(templates) == 2
+    assert len(templates) == 3
 
     for template in templates:
         name = template["name"]
@@ -259,6 +265,25 @@ def test_command_enforces_business_first_interview_order() -> None:
         assert statement in command_content, f"Required interview safeguard is missing: {statement}"
 
 
+def test_inventory_command_enforces_read_only_human_control() -> None:
+    """Inventory discovery must remain scoped, read-only, and unconfirmed."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-inventory.md"
+    command_content = command_path.read_text(encoding="utf-8")
+
+    required_statements = [
+        "explicit approval",
+        "tenant and subscription",
+        "--approve-read-only",
+        ".specify/discovery/azure-inventory.json",
+        "unconfirmed",
+        "must not be merged automatically",
+        "Do not retrieve secrets, keys, certificates, or access tokens.",
+    ]
+
+    for statement in required_statements:
+        assert statement in command_content
+
+
 def test_declared_scripts_are_valid_and_exist(
     manifest: dict[str, Any],
 ) -> None:
@@ -271,7 +296,7 @@ def test_declared_scripts_are_valid_and_exist(
         "python",
     }
 
-    assert len(scripts) == 2
+    assert len(scripts) == 3
 
     for script in scripts:
         name = script["name"]
@@ -323,7 +348,7 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.3.0.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.4.0.zip" in quick_start_content
     )
 
 
@@ -394,3 +419,80 @@ def test_quick_start_identifies_copilot_as_preview() -> None:
     assert "--integration copilot" in quick_start_content
     assert ".github/skills/speckit-azure-interview-run/SKILL.md" in quick_start_content
     assert "Preview — structurally verified; behavioral testing requested" in quick_start_content
+
+
+def test_interview_reconciles_unconfirmed_inventory_evidence() -> None:
+    """The interview must reconcile inventory without auto-confirming it."""
+    command_content = (REPOSITORY_ROOT / "commands" / "azure-interview.md").read_text(
+        encoding="utf-8"
+    )
+
+    required_statements = [
+        ".specify/discovery/azure-inventory.json",
+        "Treat every inventory record as `unconfirmed`",
+        "Never copy inventory evidence automatically",
+        "Confirm lifecycle intent",
+        "Confirm modification permission",
+        "source `azure`",
+    ]
+
+    for statement in required_statements:
+        assert statement in command_content
+
+
+def test_inventory_documentation_covers_safe_operation() -> None:
+    """Inventory documentation must cover setup, safety, and reconciliation."""
+    documentation = (REPOSITORY_ROOT / "docs" / "AZURE-INVENTORY.md").read_text(encoding="utf-8")
+
+    required_statements = [
+        "Azure CLI",
+        "Azure Resource Graph",
+        "Reader",
+        "--approve-read-only",
+        "--overwrite",
+        ".specify/discovery/azure-inventory.json",
+        "evidenceStatus",
+        "unconfirmed",
+        "Windows",
+        "must not be committed",
+        "Troubleshooting",
+    ]
+
+    for statement in required_statements:
+        assert statement in documentation
+
+
+def test_release_documentation_describes_inventory_workflow() -> None:
+    """Release-facing guidance must expose optional inventory discovery."""
+    documentation_requirements = {
+        "README.md": [
+            "Azure Inventory Discovery",
+            "speckit.azure-interview.inventory",
+            "docs/AZURE-INVENTORY.md",
+            "unconfirmed",
+        ],
+        "QUICK-START.md": [
+            "Optional Azure Inventory Discovery",
+            "speckit.azure-interview.inventory",
+            ".specify/discovery/azure-inventory.json",
+            "--approve-read-only",
+        ],
+        "docs/ARCHITECTURE.md": [
+            "azure-inventory.json",
+            "Azure Resource Graph",
+            "unconfirmed",
+            "metadata allowlist",
+        ],
+        "docs/TESTING.md": [
+            "Azure inventory",
+            "68 passed",
+            "metadata allowlist",
+            "live smoke test",
+        ],
+    }
+
+    for relative_path, required_statements in documentation_requirements.items():
+        content = (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
+
+        for statement in required_statements:
+            assert statement in content, f"{relative_path} is missing: {statement}"

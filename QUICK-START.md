@@ -48,6 +48,43 @@ Implement
 Converge until complete
 ```
 
+## Optional Azure Inventory Discovery
+
+For brownfield, migration, or extension work, inventory the approved Azure
+subscription before completing estate and existing-resource discovery.
+
+The canonical extension command is:
+
+```text
+speckit.azure-interview.inventory
+```
+
+The generated invocation syntax depends on the active Spec Kit integration.
+The command confirms the exact tenant, subscription, output path, and overwrite
+behavior before running the collector.
+
+Direct PowerShell invocation from an initialized consuming project:
+
+```powershell
+python .\.specify\extensions\azure-interview\scripts\python\collect_azure_inventory.py `
+  --subscription <confirmed-subscription-id> `
+  --tenant <confirmed-tenant-id> `
+  --approve-read-only
+```
+
+Default output:
+
+```text
+.specify/discovery/azure-inventory.json
+```
+
+The artifact remains `unconfirmed`. Continue the Azure architecture interview
+to confirm resource relevance, ownership, lifecycle intent, modification
+permission, dependencies, and prohibited changes.
+
+Inventory discovery is optional. Skip it for greenfield work or whenever Azure
+access is unavailable or not approved.
+
 ## Prerequisites
 
 Install the following tools:
@@ -202,11 +239,11 @@ review the affected files before using `--force`.
 
 ## 5. Install Spec Kit Azure Interview
 
-Install the immutable `v0.3.0` release archive:
+Install the immutable `v0.4.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is not yet
@@ -228,7 +265,7 @@ specify extension info azure-interview
 Expected extension:
 
 ```text
-Spec Kit Azure Interview (v0.3.0)
+Spec Kit Azure Interview (v0.4.0)
 ```
 
 Expected command:
@@ -742,7 +779,7 @@ Correct:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.4.0.zip
 ```
 
 The `--from` value must point to a ZIP, tar.gz, or tgz archive.
