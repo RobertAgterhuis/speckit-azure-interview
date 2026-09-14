@@ -18,6 +18,44 @@ and this project adheres to
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
+## [0.3.0] - 2026-09-14
+
+### Added
+
+- GitHub Copilot preview integration documentation.
+- No-cost GitHub Copilot structural compatibility test.
+- Optional GitHub Copilot behavioral test procedure.
+- Community testing guidance and behavioral acceptance criteria.
+- Copilot-specific skill discovery and troubleshooting guidance.
+
+### Changed
+
+- Updated the extension manifest to version `0.3.0`.
+- Updated README and Quick Start integration-support matrices.
+- Added GitHub Copilot `/speckit-*` invocation examples.
+- Updated the architecture to document the `.github/skills` integration model.
+- Updated release archive references to `v0.3.0`.
+
+### Verified
+
+- Spec Kit initialized successfully with `--integration copilot`.
+- `.specify/integration.json` recorded the Copilot integration.
+- The `v0.2.0` extension archive installed successfully into the Copilot test
+  project.
+- Spec Kit auto-registered one Azure Interview agent skill.
+- Spec Kit generated
+  `.github/skills/speckit-azure-interview-run/SKILL.md`.
+- The generated skill contained the correct name, description, and complete
+  interview instructions.
+
+### Known Limitations
+
+- GitHub Copilot interview behavior has not yet been tested by the project
+  maintainer because a paid Copilot runtime was not available.
+- Copilot support is classified as preview until behavioral acceptance criteria
+  are completed successfully.
+- Community behavioral testing is explicitly requested.
+
 ## [0.2.0] - 2026-09-14
 
 ### Added
@@ -99,7 +137,8 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/releases/tag/v0.1.0

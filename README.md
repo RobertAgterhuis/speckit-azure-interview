@@ -47,13 +47,23 @@ This extension adds a discovery and readiness stage without modifying or forking
 
 ## Supported Integrations
 
-The extension is designed to remain independent of a specific AI provider.
+The extension remains independent of a specific AI provider.
 
-It has been tested with:
+| Integration | Support level |
+|---|---|
+| Claude Code | Behaviorally tested |
+| OpenAI Codex CLI | Behaviorally tested |
+| Hermes Agent with Ollama | Behaviorally tested |
+| GitHub Copilot | Preview: structurally verified; behavioral testing requested |
+| Other Spec Kit integrations | Expected compatibility; not verified |
 
-- Claude Code
-- OpenAI Codex CLI
-- Hermes Agent with a local Ollama model
+Actual behavior depends on the selected model, integration, context window, and
+its ability to follow the interview instructions.
+
+GitHub Copilot preview support confirms that Spec Kit initializes the
+integration and generates the complete Azure interview skill under
+`.github/skills`. It does not yet claim that Copilot follows every behavioral
+and safety requirement during a complete interview.
 
 It can also be installed into other Spec Kit integrations that support generated skills or commands, including Codex and GitHub Copilot.
 
@@ -128,7 +138,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.2.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
 Verify the installation:
 
 ```powershell
@@ -276,6 +286,69 @@ $speckit-converge
 See [Codex Integration](docs/CODEX.md) for complete setup, expected behavior,
 approval guidance, validation, and troubleshooting.
 
+## GitHub Copilot Preview
+
+GitHub Copilot is available as a structurally verified preview integration.
+
+Initialize the consuming project:
+
+```powershell
+specify init --here --integration copilot --script ps
+```
+
+Install the released extension:
+
+```powershell
+specify extension add azure-interview `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+```
+
+Spec Kit generates the project-local skill at:
+
+```text
+.github/skills/speckit-azure-interview-run/SKILL.md
+```
+
+Verify:
+
+```powershell
+Test-Path `
+    .\.github\skills\speckit-azure-interview-run\SKILL.md
+```
+
+Expected:
+
+```text
+True
+```
+
+GitHub Copilot agent skills can be selected based on the prompt and skill
+description. To request this skill explicitly, use:
+
+```text
+Use the /speckit-azure-interview-run skill.
+
+We need an AVM-based Bicep solution for a production workload that must integrate with an existing Azure landing zone. Start a new Azure architecture interview.
+```
+
+The structural integration has been verified without paid Copilot usage. The
+complete adaptive interview behavior has not yet been tested by the project
+maintainer.
+
+Community testing is requested for:
+
+- Skill activation
+- Business-purpose-first behavior
+- One primary question per response
+- Markdown artifact maintenance
+- Deferred JSON generation
+- Readiness validation
+- Azure safety boundaries
+- Specification handoff
+
+See [GitHub Copilot Integration](docs/COPILOT.md) for the support status,
+installation, acceptance criteria, and feedback instructions.
+
 ## Hermes Agent Usage
 
 Some Hermes installations use a custom `HERMES_HOME` and do not automatically discover skills generated in the default user-profile directory.
@@ -407,6 +480,7 @@ See [Testing Guide](docs/TESTING.md) for integration and smoke-test procedures.
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── CODEX.md
+│   ├── COPILOT.md
 │   ├── HERMES.md
 │   └── TESTING.md
 ├── scripts/
@@ -442,6 +516,7 @@ See [Testing Guide](docs/TESTING.md) for integration and smoke-test procedures.
 
 - [Quick Start](QUICK-START.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [GitHub Copilot Integration](docs/COPILOT.md)
 - [Codex Integration](docs/CODEX.md)
 - [Testing Guide](docs/TESTING.md)
 - [Hermes Integration](docs/HERMES.md)
@@ -453,9 +528,11 @@ See [Testing Guide](docs/TESTING.md) for integration and smoke-test procedures.
 
 The project is under active development.
 
-Version `0.2.0` provides:
+Version `0.3.0` provides:
 - Establishes the initial interview workflow, output templates, JSON Schema, validation utility, package tests, CI checks, and Hermes compatibility support.
 - Tested Claude Code, OpenAI Codex CLI, and Hermes Agent support.
+- GitHub Copilot preview support with structurally verified skill generation
+  and an explicit request for community behavioral testing.
 
 ## Contributing
 

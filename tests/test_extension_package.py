@@ -48,6 +48,7 @@ def test_required_repository_files_exist() -> None:
         "README.md",
         "QUICK-START.md",
         "docs/CODEX.md",
+        "docs/COPILOT.md",
         "LICENSE",
         "CHANGELOG.md",
         "requirements-dev.txt",
@@ -322,7 +323,7 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.2.0.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.3.0.zip" in quick_start_content
     )
 
 
@@ -356,6 +357,7 @@ def test_release_versions_are_consistent(
         REPOSITORY_ROOT / "QUICK-START.md",
         REPOSITORY_ROOT / "docs" / "CODEX.md",
         REPOSITORY_ROOT / "docs" / "TESTING.md",
+        REPOSITORY_ROOT / "docs" / "COPILOT.md",
     ]
 
     for file_path in release_facing_files:
@@ -364,3 +366,31 @@ def test_release_versions_are_consistent(
             f"{file_path.relative_to(REPOSITORY_ROOT)} does not reference "
             f"the current release tag {expected_tag}"
         )
+
+
+def test_copilot_documentation_describes_preview_support() -> None:
+    """Copilot documentation must distinguish structural and behavioral support."""
+    copilot_documentation_path = REPOSITORY_ROOT / "docs" / "COPILOT.md"
+    copilot_documentation = copilot_documentation_path.read_text(encoding="utf-8")
+
+    required_statements = [
+        "specify init --here --integration copilot --script ps",
+        ".github/skills/speckit-azure-interview-run/SKILL.md",
+        "/speckit-azure-interview-run",
+        "Preview — structurally verified; behavioral testing requested",
+        "What specific business capability or problem must this workload address?",
+        "Community Testing Requested",
+    ]
+
+    for statement in required_statements:
+        assert statement in copilot_documentation
+
+
+def test_quick_start_identifies_copilot_as_preview() -> None:
+    """Quick Start must not present Copilot as behaviorally verified."""
+    quick_start_path = REPOSITORY_ROOT / "QUICK-START.md"
+    quick_start_content = quick_start_path.read_text(encoding="utf-8")
+
+    assert "--integration copilot" in quick_start_content
+    assert ".github/skills/speckit-azure-interview-run/SKILL.md" in quick_start_content
+    assert "Preview — structurally verified; behavioral testing requested" in quick_start_content

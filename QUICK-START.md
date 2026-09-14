@@ -178,6 +178,11 @@ specify init --here --integration hermes --script ps
 specify init --here --integration codex --script ps
 ```
 
+### GitHub Copilot
+
+```powershell
+specify init --here --integration copilot --script ps
+
 ### Another Integration
 
 List the supported integration identifiers:
@@ -197,11 +202,11 @@ review the affected files before using `--force`.
 
 ## 5. Install Spec Kit Azure Interview
 
-Install the immutable `v0.2.0` release archive:
+Install the immutable `v0.3.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.2.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is not yet
@@ -223,7 +228,7 @@ specify extension info azure-interview
 Expected extension:
 
 ```text
-Spec Kit Azure Interview (v0.2.0)
+Spec Kit Azure Interview (v0.3.0)
 ```
 
 Expected command:
@@ -289,6 +294,56 @@ $speckit-azure-interview-run
 ```
 
 See [Codex Integration](docs/CODEX.md) for complete instructions.
+
+### GitHub Copilot
+
+Open the consuming repository in a GitHub Copilot surface that supports agent
+skills, such as agent mode in Visual Studio Code or GitHub Copilot CLI.
+
+The generated Azure interview skill is located at:
+
+```text
+.github/skills/speckit-azure-interview-run/SKILL.md
+```
+
+Verify the skill:
+
+```powershell
+Test-Path `
+    .\.github\skills\speckit-azure-interview-run\SKILL.md
+```
+
+Expected:
+
+```text
+True
+```
+
+Request the skill explicitly:
+
+```text
+Use the /speckit-azure-interview-run skill.
+
+We need an AVM-based Bicep solution for a production workload that must integrate with an existing Azure landing zone. Start a new Azure architecture interview.
+```
+
+GitHub Copilot support is currently classified as:
+
+```text
+Preview — structurally verified; behavioral testing requested
+```
+
+The project maintainer has verified skill generation without consuming paid
+Copilot usage. Complete interview behavior has not yet been verified.
+
+See [GitHub Copilot Integration](docs/COPILOT.md) for:
+
+- Installation instructions
+- Structural acceptance criteria
+- Behavioral acceptance criteria
+- Known limitations
+- Community testing guidance
+- Troubleshooting
 
 ### Hermes Agent
 
@@ -687,7 +742,7 @@ Correct:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.2.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
 ```
 
 The `--from` value must point to a ZIP, tar.gz, or tgz archive.
@@ -751,4 +806,5 @@ workload interview.
 - [AVM Spec Kit example](https://azure.github.io/Azure-Verified-Modules/experimental/ai-assisted-sol-dev/spec-kit/avm-example/)
 - [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
 - [Codex Integration](docs/CODEX.md)
+- [GitHub Copilot Integration](docs/COPILOT.md)
 - [Hermes Agent Integration](docs/HERMES.md)

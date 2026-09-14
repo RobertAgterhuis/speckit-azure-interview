@@ -256,6 +256,81 @@ During the interview, normal write access is limited to:
 The JSON artifact is created only when the interview can pass the readiness
 gate.
 
+### GitHub Copilot integration
+
+Spec Kit generates the extension command as a project-local GitHub Copilot agent
+skill:
+
+```text
+.github/skills/speckit-azure-interview-run/SKILL.md
+```
+
+The integration uses GitHub Copilot's repository-level agent-skills convention.
+
+```mermaid
+flowchart TD
+    E["Extension command"] --> K["Spec Kit integration"]
+    K --> S[".github/skills"]
+    S --> I["speckit-azure-interview-run"]
+    I --> C["GitHub Copilot"]
+```
+
+The skill can be requested explicitly with:
+
+```text
+/speckit-azure-interview-run
+```
+
+or through a natural-language request:
+
+```text
+Use the /speckit-azure-interview-run skill to start a new Azure architecture interview.
+```
+
+Spec Kit owns the Copilot-specific skill generation. This extension remains
+responsible for:
+
+- Provider-independent interview instructions
+- Markdown discovery-template behavior
+- The machine-readable JSON Schema
+- Schema and semantic validation
+- Readiness-gate requirements
+- Azure safety boundaries
+
+No separate GitHub Copilot adapter is required.
+
+The structurally verified flow is:
+
+```text
+extension.yml
+    ↓
+commands/azure-interview.md
+    ↓
+Spec Kit Copilot integration
+    ↓
+.github/skills/speckit-azure-interview-run/SKILL.md
+```
+
+Structural verification confirms:
+
+- Spec Kit accepts `--integration copilot`.
+- The extension installs successfully.
+- One agent skill is auto-registered.
+- The generated skill has the correct name and description.
+- The complete interview instructions are present.
+
+Structural verification does not prove that a selected Copilot model follows
+every interview and safety instruction.
+
+Until behavioral validation is completed, GitHub Copilot support remains:
+
+```text
+Preview — structurally verified; behavioral testing requested
+```
+
+The Copilot subscription, selected model, IDE or CLI behavior, and approval
+system remain outside the extension boundary.
+
 ### Hermes custom-home compatibility
 
 Spec Kit may generate Hermes skills under:

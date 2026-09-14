@@ -251,7 +251,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.2.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
 ```
 
 Verify the generated skill:
@@ -316,6 +316,174 @@ for smoke testing.
 
 See [Codex Integration](CODEX.md) for complete expected behavior and
 troubleshooting.
+
+## GitHub Copilot Structural Test
+
+This test verifies Spec Kit integration and skill generation without requiring a
+paid GitHub Copilot conversation.
+
+Create a dedicated test project:
+
+```powershell
+$CopilotTestPath = "G:\PERSONAL\REPOS\speckit-azure-interview-test-copilot"
+
+if (-not (Test-Path $CopilotTestPath)) {
+    New-Item -ItemType Directory -Path $CopilotTestPath | Out-Null
+}
+
+Set-Location $CopilotTestPath
+```
+
+Initialize Spec Kit:
+
+```powershell
+specify init --here --integration copilot --script ps
+```
+
+Install the released extension:
+
+```powershell
+specify extension add azure-interview `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.3.0.zip
+```
+
+Accept the expected external-source warning only after verifying the archive
+URL.
+
+Verify the extension:
+
+```powershell
+specify extension list
+specify extension info azure-interview
+```
+
+Expected installation output includes:
+
+```text
+Spec Kit Azure Interview (v0.3.0)
+1 agent skill(s) auto-registered
+```
+
+Verify the integration record:
+
+```powershell
+Get-Content .\.specify\integration.json
+```
+
+Expected integration values include:
+
+```text
+integration: copilot
+invoke_separator: -
+```
+
+Verify the generated skill:
+
+```powershell
+Test-Path `
+    .\.github\skills\speckit-azure-interview-run\SKILL.md
+```
+
+Expected:
+
+```text
+True
+```
+
+Inspect its frontmatter:
+
+```powershell
+Get-Content `
+    .\.github\skills\speckit-azure-interview-run\SKILL.md `
+    -TotalCount 15
+```
+
+Expected values include:
+
+```yaml
+name: speckit-azure-interview-run
+description: Conduct an adaptive Azure architecture interview before specification
+```
+
+Confirm that the generated skill contains the critical safeguards:
+
+```powershell
+$CopilotSkill = `
+    ".\.github\skills\speckit-azure-interview-run\SKILL.md"
+
+Select-String `
+    -Path $CopilotSkill `
+    -Pattern `
+        "Ask exactly one primary question per response",
+        "specific business capability or problem",
+        "Create JSON only when",
+        "Do not generate deployable infrastructure code"
+```
+
+Every required safeguard must be found.
+
+### Structural Acceptance Criteria
+
+The structural test passes when:
+
+- Spec Kit accepts `--integration copilot`.
+- `.specify/integration.json` records `copilot`.
+- The released extension installs successfully.
+- Spec Kit auto-registers one extension skill.
+- `.github/skills/speckit-azure-interview-run/SKILL.md` exists.
+- The skill name and description are correct.
+- The complete interview safeguards are present.
+
+This test does not validate model behavior and should not be described as a
+behavioral Copilot smoke test.
+
+## GitHub Copilot Behavioral Test
+
+This test requires access to a supported GitHub Copilot runtime.
+
+Open the consuming test project in a Copilot surface that supports agent skills.
+Request the skill explicitly:
+
+```text
+Use the /speckit-azure-interview-run skill.
+
+We need an AVM-based Bicep solution for a production workload that must integrate with an existing Azure landing zone. Start a new Azure architecture interview.
+```
+
+Verify that Copilot:
+
+- Activates or acknowledges the intended skill.
+- Reads the project constitution and interview templates.
+- Creates `.specify/discovery/azure-context.md`.
+- Records only confirmed facts.
+- Preserves unknown values.
+- Asks exactly one business-purpose question first.
+- Does not ask architecture questions in the first response.
+- Does not generate Bicep or Terraform.
+- Does not perform Azure operations.
+- Does not create `.specify/discovery/azure-context.json` prematurely.
+
+Record:
+
+- Copilot product and surface
+- Copilot version
+- Selected model
+- Spec Kit version
+- Extension version
+- Operating system
+- First complete response
+- Created artifact names
+- Any unexpected behavior
+
+Sanitize all test evidence before sharing it.
+
+Until this behavioral test is completed successfully, Copilot support remains:
+
+```text
+Preview — structurally verified; behavioral testing requested
+```
+
+See [GitHub Copilot Integration](COPILOT.md) for detailed guidance.
 
 ## Hermes Smoke Test
 
