@@ -67,3 +67,75 @@ Implementation begins only after the intended design has been reviewed.
 - Existing files require explicit overwrite approval.
 - Generated design artifacts do not prove deployed Azure state.
 - As-built verification remains a separate lifecycle stage.
+
+## Complete Azure architecture workflow
+
+Version **v0.8.0** documents the complete evidence-driven workflow from
+brownfield discovery through specification handoff.
+
+### Azure Inventory Discovery
+
+Azure Inventory Discovery performs explicitly approved, subscription-scoped,
+read-only discovery. It records a controlled Azure resource inventory without
+copying arbitrary resource properties or modifying Azure.
+
+The generated evidence remains unconfirmed until a person reviews it. See
+[Inventory command](./commands/inventory/) and
+[Inventory evidence](./artifacts/inventory-evidence/).
+
+### Brownfield Topology Discovery
+
+Brownfield Topology Discovery adds six controlled relationship types:
+
+- virtual network to subnet containment;
+- virtual network peering;
+- subnet to network security group association;
+- subnet to route table association;
+- private endpoint subnet placement;
+- Private DNS zone to virtual network links.
+
+Cross-subscription targets can be referenced as `external-subscription`, but
+the referenced subscription is never queried automatically. Unresolvable
+targets are retained as `unresolved` evidence instead of being silently
+discarded.
+
+### Smarter Interview Mode
+
+Smarter Interview Mode starts with one isolated business-purpose question.
+After that purpose is understood, it asks adaptive batches of two to four
+closely related, independent questions.
+
+The interview recalculates the next applicable questions after every response,
+supports partial answers, and keeps approval, consent, security exceptions,
+destructive operations and ambiguous conflicts as isolated protected
+decisions.
+
+See the [interview command](./commands/interview/).
+
+### Azure Intended Design
+
+Azure Intended Design transforms confirmed interview state into consistent
+Markdown and JSON design artifacts. Existing resources, planned resources,
+relationships, permissions and ownership boundaries are rendered from one
+canonical state.
+
+See [Intended Design](./commands/intended-design/) and the
+[intended-design artifact](./artifacts/intended-design/).
+
+### Azure Intended Design Review
+
+Azure Intended Design Review binds an attributable human decision to the
+generated design. Approval and rejection remain explicit, and review records
+are protected against silent replacement.
+
+See [Design Review](./commands/design-review/) and the
+[design-review artifact](./artifacts/design-review/).
+
+## Current release: v0.8.0
+
+v0.8.0 adds brownfield topology discovery, seven separate Azure Resource Graph
+query flows, Windows-safe KQL normalization, pagination-integrity checks and
+atomic evidence publication.
+
+Start with [Getting Started](./getting-started/) or review the
+[complete workflow](./workflow/).

@@ -248,3 +248,30 @@ semantically validated before publication.
 
 Topology evidence does not prove that traffic can flow or that a resource may
 be reused or changed. It remains `unconfirmed` until reconciled with the user.
+
+## Counts and limitations
+
+The inventory summary exposes `resourceCount` for accepted resource records.
+When topology evidence is present, `relationshipCount` reports the number of
+validated and deduplicated relationships.
+
+These counts are integrity fields: they must match the persisted arrays.
+Semantic validation rejects inconsistent counts, malformed endpoints,
+unsupported relationship types and invalid target-scope classifications.
+
+### Evidence limitations
+
+Inventory evidence is deliberately bounded:
+
+- it represents the approved subscription and collection time, not continuous
+  live state;
+- it does not prove that discovered configuration is desired or compliant;
+- it does not convert discovered relationships into human-approved decisions;
+- inaccessible or unsupported resource details may remain unknown;
+- external subscriptions are referenced but never queried automatically;
+- an `unresolved` target must be reconciled during the interview;
+- Resource Graph projections contain only controlled fields;
+- no partial artifact is published when collection or validation fails.
+
+Treat the artifact as unconfirmed input until the user reconciles it during the
+architecture interview.

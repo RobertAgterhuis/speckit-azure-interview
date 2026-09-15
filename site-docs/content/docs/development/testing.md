@@ -317,7 +317,7 @@ Codex may request project filesystem approval when its sandbox cannot access the
 test repository. Review the exact command and paths and prefer one-time approval
 for smoke testing.
 
-See [Codex Integration](CODEX.md) for complete expected behavior and
+See [Codex Integration](../integrations/codex/) for complete expected behavior and
 troubleshooting.
 
 ## GitHub Copilot Structural Test
@@ -486,7 +486,7 @@ Until this behavioral test is completed successfully, Copilot support remains:
 Preview — structurally verified; behavioral testing requested
 ```
 
-See [GitHub Copilot Integration](COPILOT.md) for detailed guidance.
+See [GitHub Copilot Integration](../integrations/copilot/) for detailed guidance.
 
 ## Hermes Smoke Test
 
@@ -651,3 +651,39 @@ A manual smoke test must also verify that:
 
 The smoke test confirms rendering compatibility only. It does not approve the
 design or verify deployed Azure state.
+
+## Documentation and security validation
+
+The repository validates the public documentation as part of the release
+quality gate.
+
+### Astro validation
+
+Run the configured Astro checks before publication. Astro must report zero
+errors, zero warnings and zero hints. The documentation build must generate
+all configured static routes successfully.
+
+The public-site contract additionally verifies that essential workflow,
+inventory, interview, design-review and release information remains present in
+the Starlight source pages.
+
+### CodeQL validation
+
+GitHub CodeQL provides the repository security-analysis gate. A documentation
+or release change is not considered complete until the CodeQL workflow and the
+other required GitHub Actions checks finish successfully.
+
+### Live publication validation
+
+After the Documentation workflow succeeds, verify routes independently:
+
+- the homepage exposes the complete product workflow and current release;
+- Getting Started exposes the active immutable installation version;
+- command pages expose approvals, failure behavior and safety boundaries;
+- artifact pages expose schemas, evidence status and limitations;
+- every checked route returns HTTP 200;
+- visible normalized page text contains the required route-specific content.
+
+A successful build alone does not prove that the expected content is live.
+Always bind the Documentation workflow run to the exact main commit being
+verified.

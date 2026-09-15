@@ -215,3 +215,40 @@ Only query the explicitly approved subscription. Record a controlled reference
 when a target is classified as `external-subscription`, but never query a
 referenced external subscription. Do not infer reachability, data flow,
 ownership, permission, or intended reuse from a discovered relationship.
+
+## Troubleshooting
+
+### Azure CLI is not authenticated
+
+Run `az login`, select the intended tenant and subscription, and verify the
+active context with `az account show`. The collector stops when tenant or
+subscription validation fails.
+
+### Resource Graph is unavailable
+
+Confirm that the Azure CLI Resource Graph extension is installed and that the
+identity has read access to the approved subscription. A failed query does not
+publish partial evidence.
+
+### Windows returns unexpected query results
+
+v0.8.0 normalizes multiline KQL into one Windows-safe command-line argument.
+Use the current collector and Resource Graph extension. Older command builders
+may allow `az.cmd` to execute only the first KQL line.
+
+### Pagination validation fails
+
+Repeated continuation tokens, changing total-record counts and truncated
+terminal pages are rejected. Retry only after confirming that the active
+subscription and Resource Graph service are stable.
+
+### The inventory file already exists
+
+The collector refuses replacement unless overwrite approval was explicitly
+provided with `--overwrite`. Validate the existing artifact before deciding
+whether replacement is appropriate.
+
+### A relationship points outside the subscription
+
+The relationship is classified as `external-subscription`. The target is
+referenced for reconciliation, but the external subscription is not queried.

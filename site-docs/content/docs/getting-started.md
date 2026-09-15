@@ -58,3 +58,20 @@ Intended design output starts as `intended` and `unreviewed`.
 
 Neither artifact proves deployed Azure state, and neither may bypass explicit
 human review.
+
+## Next steps
+
+After installing v0.8.0, use the workflow that matches the available evidence:
+
+1. Establish the project constitution and confirm the repository boundary.
+2. Run Azure Inventory Discovery when an existing subscription must be
+   examined.
+3. Review inventory and topology evidence before treating it as confirmed.
+4. Start the adaptive Azure architecture interview.
+5. Generate the Azure Intended Design only after the readiness gate passes.
+6. Complete Azure Intended Design Review with an attributable human decision.
+7. Continue to Spec Kit `specify` only after the design is approved.
+
+Continue with the [complete workflow](./workflow/). For existing Azure estates,
+also read the [inventory command](./commands/inventory/) and
+[inventory evidence contract](./artifacts/inventory-evidence/).

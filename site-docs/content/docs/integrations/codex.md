@@ -498,5 +498,5 @@ boundaries, and unresolved assumptions.
 Only pass `--overwrite` after the user explicitly approves replacement of the
 complete design artifact set.
 
-See [Azure Intended Design](AZURE-DESIGN.md) for the full review and safety
+See [Azure Intended Design](../artifacts/intended-design/) for the full review and safety
 workflow.

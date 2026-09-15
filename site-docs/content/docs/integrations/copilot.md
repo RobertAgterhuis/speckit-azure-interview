@@ -607,4 +607,4 @@ private endpoints, diagnostics, and dependencies before implementation.
 
 Use `--overwrite` only after explicit user approval.
 
-See [Azure Intended Design](AZURE-DESIGN.md) for the complete workflow.
+See [Azure Intended Design](../artifacts/intended-design/) for the complete workflow.

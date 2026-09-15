@@ -1272,3 +1272,91 @@ def test_brownfield_topology_release_is_version_0_8_0(
         normalized_statement = " ".join(statement.split()).casefold()
 
         assert normalized_statement in normalized_changelog, f"CHANGELOG.md is missing: {statement}"
+
+
+def test_public_documentation_covers_complete_workflow_and_v0_8_0() -> None:
+    """Published documentation must expose the complete product and v0.8.0."""
+    required_topics_by_page = {
+        "site-docs/content/docs/index.mdx": [
+            "Azure Inventory Discovery",
+            "Brownfield Topology Discovery",
+            "Smarter Interview Mode",
+            "Azure Intended Design",
+            "Azure Intended Design Review",
+            "v0.8.0",
+        ],
+        "site-docs/content/docs/getting-started.md": [
+            "Prerequisites",
+            "Installation",
+            "v0.8.0",
+            "Azure CLI",
+            "Spec Kit",
+            "Next steps",
+        ],
+        "site-docs/content/docs/workflow.md": [
+            "Inventory",
+            "Interview",
+            "Intended Design",
+            "Design Review",
+            "Specify",
+            "unconfirmed",
+            "approved",
+        ],
+        ("site-docs/content/docs/artifacts/inventory-evidence.md"): [
+            "resourceCount",
+            "topology",
+            "relationshipCount",
+            "relationshipType",
+            "targetScope",
+            "topologyQueries",
+            "external-subscription",
+            "unresolved",
+            "limitations",
+        ],
+        "site-docs/content/docs/commands/inventory.md": [
+            "Prerequisites",
+            "Approval",
+            "--approve-read-only",
+            "--overwrite",
+            "Topology Evidence",
+            "Failure",
+            "Troubleshooting",
+        ],
+        "site-docs/content/docs/commands/interview.md": [
+            "business-purpose",
+            "adaptive",
+            "protected decisions",
+            "partial",
+            "Completion Transaction",
+            "readyForSpecification",
+        ],
+        "site-docs/content/docs/development/testing.md": [
+            "Ruff",
+            "pytest",
+            "YAML",
+            "JSON Schema",
+            "Astro",
+            "CodeQL",
+            "Windows",
+            "live",
+        ],
+    }
+
+    missing_topics: list[str] = []
+
+    for relative_path, required_topics in required_topics_by_page.items():
+        page_path = REPOSITORY_ROOT / relative_path
+
+        assert page_path.is_file(), f"Public documentation page does not exist: {relative_path}"
+
+        normalized_content = " ".join(page_path.read_text(encoding="utf-8").split()).casefold()
+
+        for topic in required_topics:
+            normalized_topic = " ".join(topic.split()).casefold()
+
+            if normalized_topic not in normalized_content:
+                missing_topics.append(f"{relative_path}: {topic}")
+
+    assert not missing_topics, (
+        "Essential public documentation topics are missing:\n- " + "\n- ".join(missing_topics)
+    )
