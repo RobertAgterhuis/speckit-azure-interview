@@ -1,4 +1,7 @@
-# Azure Intended Design
+---
+title: "Intended-Design Artifacts"
+description: "Review the JSON, Mermaid, SVG, and Draw.io intended-design artifacts."
+---
 
 The Azure Intended Design feature converts a completed and confirmed Azure
 interview context into reviewable intended-state architecture artifacts.
@@ -193,42 +196,3 @@ A separate future verification command should collect deployed state after
 implementation and compare it with the approved design. That later workflow
 must report matched resources, missing resources, unexpected resources, and
 configuration drift without rewriting the intended-design record.
-## Record the Review Decision
-
-Generating the intended design does not approve it. After inspecting the model
-and all three visual representations, invoke:
-
-    /speckit.azure-interview.design-review
-
-The command records either `approved` or `rejected`.
-
-Approval requires an explicit named human reviewer, permits no unresolved
-findings, and produces:
-
-- `reviewStatus: approved`;
-- `implementationAuthorized: true`.
-
-Rejection requires at least one actionable finding and produces:
-
-- `reviewStatus: rejected`;
-- `implementationAuthorized: false`.
-
-The review operation creates:
-
-- `.specify/design/azure-design-review.json`;
-- `.specify/design/azure-design-review.md`.
-
-It also regenerates the design Markdown, SVG, and Draw.io artifacts so every
-representation displays the same terminal review status.
-
-The JSON review binds the decision to the exact reviewed
-`azure-design-model.json` through a lowercase SHA-256 digest. Any later change
-to the model invalidates the recorded review relationship.
-
-Existing terminal review records remain protected unless the reviewer
-explicitly authorizes `--overwrite`.
-
-See
-[Azure Intended Design Review](AZURE-DESIGN-REVIEW.md)
-for the complete command syntax, schema contract, transaction behavior,
-verification steps, and troubleshooting guidance.

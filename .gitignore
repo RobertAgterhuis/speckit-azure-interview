@@ -450,3 +450,6 @@ coverage/
 *.swp
 dist/
 .astro/
+# Preserve Starlight artifact documentation sources.
+!site-docs/content/docs/artifacts/
+!site-docs/content/docs/artifacts/*.md

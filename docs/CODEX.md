@@ -114,7 +114,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is installed
@@ -497,3 +497,43 @@ complete design artifact set.
 
 See [Azure Intended Design](AZURE-DESIGN.md) for the full review and safety
 workflow.
+## Review the Intended Azure Design
+
+After generating and inspecting the intended architecture, invoke:
+
+    $speckit-azure-interview-design-review
+
+The review must represent an explicit human decision. Supported decisions are
+`approved` and `rejected`. Conditional approval is not supported.
+
+For approval, provide the named human reviewer and confirm that no unresolved
+findings remain. The synchronized result must contain:
+
+- `reviewStatus: approved`;
+- `implementationAuthorized: true`.
+
+For rejection, provide the named reviewer and at least one actionable finding.
+The synchronized result must contain:
+
+- `reviewStatus: rejected`;
+- `implementationAuthorized: false`.
+
+The review produces:
+
+- `.specify/design/azure-design-review.json`;
+- `.specify/design/azure-design-review.md`.
+
+It also updates the model, Markdown overview, SVG, and Draw.io diagram. The
+review JSON contains a lowercase SHA-256 digest that binds the decision to the
+exact final design model.
+
+Do not infer approval from prior conversation or from successful artifact
+generation. Do not start implementation while `implementationAuthorized` is
+`false`.
+
+Use `--overwrite` only after the user explicitly approves replacing an
+existing terminal review. The command does not deploy Azure resources, grant
+permissions, or prove deployed Azure state.
+
+See [Azure Intended Design Review](AZURE-DESIGN-REVIEW.md) for the full
+decision and verification workflow.

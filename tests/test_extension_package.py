@@ -51,19 +51,23 @@ def test_required_repository_files_exist() -> None:
         "docs/COPILOT.md",
         "docs/AZURE-INVENTORY.md",
         "docs/AZURE-DESIGN.md",
+        "docs/AZURE-DESIGN-REVIEW.md",
         "LICENSE",
         "CHANGELOG.md",
         "requirements-dev.txt",
         "commands/azure-interview.md",
         "commands/azure-inventory.md",
         "commands/azure-design.md",
+        "commands/azure-design-review.md",
         "templates/azure-context-template.md",
         "templates/azure-context.schema.json",
         "templates/azure-inventory.schema.json",
         "templates/azure-design.schema.json",
+        "templates/azure-design-review.schema.json",
         "scripts/python/validate_context.py",
         "scripts/python/collect_azure_inventory.py",
         "scripts/python/generate_azure_design.py",
+        "scripts/python/review_azure_design.py",
         "requirements-runtime.txt",
         ".extensionignore",
         "scripts/powershell/Install-HermesSkillAdapter.ps1",
@@ -122,7 +126,7 @@ def test_command_is_namespaced_and_exists(
     extension_id = manifest["extension"]["id"]
     commands = manifest["provides"]["commands"]
 
-    assert len(commands) == 3
+    assert len(commands) == 4
 
     for command in commands:
         match = COMMAND_NAME_PATTERN.fullmatch(command["name"])
@@ -164,7 +168,7 @@ def test_declared_templates_are_valid_and_exist(
     templates = manifest["provides"]["templates"]
     template_names: set[str] = set()
 
-    assert len(templates) == 4
+    assert len(templates) == 5
 
     for template in templates:
         name = template["name"]
@@ -300,7 +304,7 @@ def test_declared_scripts_are_valid_and_exist(
         "python",
     }
 
-    assert len(scripts) == 4
+    assert len(scripts) == 5
 
     for script in scripts:
         name = script["name"]
@@ -352,7 +356,7 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.5.0.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.6.0.zip" in quick_start_content
     )
 
 
@@ -474,6 +478,7 @@ def test_release_documentation_describes_inventory_workflow() -> None:
             "speckit.azure-interview.inventory",
             "docs/AZURE-INVENTORY.md",
             "docs/AZURE-DESIGN.md",
+            "docs/AZURE-DESIGN-REVIEW.md",
             "unconfirmed",
         ],
         "QUICK-START.md": [
@@ -543,6 +548,7 @@ def test_release_documentation_describes_intended_design_workflow() -> None:
             "Azure Intended Design",
             "speckit.azure-interview.design",
             "docs/AZURE-DESIGN.md",
+            "docs/AZURE-DESIGN-REVIEW.md",
             "reviewStatus: unreviewed",
         ],
         "QUICK-START.md": [
@@ -627,3 +633,111 @@ def test_quick_start_places_inventory_and_design_in_workflow_order() -> None:
     assert "unreviewed" in quick_start
     normalized_quick_start = " ".join(quick_start.split())
     assert "explicit human approval" in normalized_quick_start
+
+
+def test_design_review_command_enforces_explicit_human_decision() -> None:
+    """Design review must preserve explicit and traceable human control."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-design-review.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_statements = [
+        "review_azure_design.py",
+        "azure-design-review.schema.json",
+        ".specify/design/azure-design-review.json",
+        ".specify/design/azure-design-review.md",
+        "--decision",
+        "approved",
+        "rejected",
+        "explicit human approval",
+        "SHA-256",
+        "--overwrite",
+        "does not prove deployed Azure state",
+        "does not perform Azure write operations",
+    ]
+
+    for statement in required_statements:
+        assert statement in content
+
+
+def test_documentation_describes_explicit_design_review() -> None:
+    """Documentation must explain approval evidence and control boundaries."""
+    documentation_requirements = {
+        "README.md": [
+            "Azure Intended Design Review",
+            "speckit.azure-interview.design-review",
+            "azure-design-review.json",
+            "docs/AZURE-DESIGN-REVIEW.md",
+        ],
+        "QUICK-START.md": [
+            "Record the Intended Design Decision",
+            "speckit.azure-interview.design-review",
+            "approved",
+            "rejected",
+            "implementationAuthorized",
+        ],
+        "docs/ARCHITECTURE.md": [
+            "Design Review Evidence",
+            "azure-design-review.json",
+            "SHA-256",
+            "transaction",
+        ],
+        "docs/AZURE-DESIGN.md": [
+            "speckit.azure-interview.design-review",
+            "azure-design-review.json",
+            "implementationAuthorized",
+        ],
+        "docs/AZURE-DESIGN-REVIEW.md": [
+            "Azure Intended Design Review",
+            "review_azure_design.py",
+            "azure-design-review.schema.json",
+            "azure-design-review.json",
+            "azure-design-review.md",
+            "SHA-256",
+            "approved",
+            "rejected",
+            "implementationAuthorized",
+            "--overwrite",
+            "Troubleshooting",
+        ],
+        "docs/TESTING.md": [
+            "Azure Design-Review Tests",
+            "test_review_azure_design.py",
+            "design digest",
+            "transactional publication",
+        ],
+        "docs/CODEX.md": [
+            "Review the Intended Azure Design",
+            "speckit-azure-interview-design-review",
+            "implementationAuthorized",
+        ],
+        "docs/COPILOT.md": [
+            "Review the Intended Azure Design",
+            "speckit-azure-interview-design-review",
+            "implementationAuthorized",
+        ],
+        "site-docs/content/docs/workflow.md": [
+            "Design Review Decision",
+            "speckit.azure-interview.design-review",
+            "implementationAuthorized",
+        ],
+        "site-docs/content/docs/commands/design-review.md": [
+            "Intended Design Review",
+            "speckit.azure-interview.design-review",
+            "approved",
+            "rejected",
+        ],
+        "site-docs/content/docs/artifacts/design-review.md": [
+            "Design Review Evidence",
+            "azure-design-review.json",
+            "SHA-256",
+            "implementationAuthorized",
+        ],
+    }
+
+    for relative_path, required_statements in documentation_requirements.items():
+        content = (REPOSITORY_ROOT / relative_path).read_text(
+            encoding="utf-8",
+        )
+
+        for statement in required_statements:
+            assert statement in content, f"{relative_path} is missing: {statement}"
