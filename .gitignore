@@ -448,3 +448,5 @@ coverage/
 *.temp
 *.bak
 *.swp
+dist/
+.astro/

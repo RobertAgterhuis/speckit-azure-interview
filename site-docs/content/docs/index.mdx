@@ -1,0 +1,69 @@
+---
+title: Spec Kit Azure Interview
+description: Guided Azure architecture discovery before specification and implementation.
+template: splash
+hero:
+  title: Spec Kit Azure Interview
+  tagline: Discover, confirm, design, review, and verify Azure architecture with explicit human control.
+  actions:
+    - text: Get started
+      link: /speckit-azure-interview/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/RobertAgterhuis/speckit-azure-interview
+      icon: external
+---
+
+import {
+  Card,
+  CardGrid,
+  LinkCard,
+} from "@astrojs/starlight/components";
+
+## Architecture before implementation
+
+Spec Kit Azure Interview extends GitHub Spec Kit with structured Azure
+discovery and review checkpoints. It does not replace or modify Spec Kit Core.
+
+<CardGrid>
+  <Card title="Inventory Discovery" icon="magnifier">
+    Optionally collect subscription-scoped, read-only Azure Resource Graph
+    evidence. Inventory remains unconfirmed until reviewed with the user.
+  </Card>
+
+  <Card title="Azure Interview" icon="comment">
+    Confirm workload requirements, Azure scope, ownership, constraints,
+    existing resources, networking, security, and operational requirements.
+  </Card>
+
+  <Card title="Intended Design" icon="seti:config">
+    Generate JSON, Mermaid, SVG, and editable Draw.io architecture artifacts.
+    Designs remain intended and unreviewed until explicit human approval.
+  </Card>
+</CardGrid>
+
+## Workflow
+
+The extension introduces three Azure-focused stages:
+
+1. Optional inventory discovery
+2. Confirmed Azure architecture interview
+3. Intended-design generation and human review
+
+Implementation begins only after the intended design has been reviewed.
+
+<LinkCard
+  title="Explore the complete workflow"
+  description="See where inventory, interview, and design review fit into Spec Kit."
+  href="/speckit-azure-interview/workflow/"
+/>
+
+## Human control by design
+
+- Inventory collection requires explicit read-only approval.
+- Inventory evidence starts as unconfirmed.
+- Intended designs start as unreviewed.
+- Existing files require explicit overwrite approval.
+- Generated design artifacts do not prove deployed Azure state.
+- As-built verification remains a separate lifecycle stage.
