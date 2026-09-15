@@ -147,33 +147,227 @@ If either output artifact already exists:
 
 ## Interview Style
 
-1. Ask exactly one primary question per response.
-2. Never combine independent decisions in one question, questionnaire, form, or
-   tool invocation.
-3. A primary question may contain multiple fields only when they describe one
-   inseparable fact, such as a resource name together with its resource ID.
-4. Provide two to five mutually exclusive answer options when that improves
-   clarity.
-5. Put the recommended option first and explain why it is recommended.
-6. Always permit a free-form answer.
-7. Explain the consequence of each material choice.
-8. Confirm a section before moving to the next major section.
-9. Periodically summarize what has been confirmed and what remains open.
-10. Avoid presenting the complete questionnaire at once.
-11. Skip sections that are demonstrably irrelevant.
-12. Reopen a skipped section when a later answer makes it relevant.
-13. Challenge contradictions respectfully and request a decision.
-14. Do not declare an answer confirmed until the user has answered or approved
-    the proposed interpretation.
-15. When the user says `GROEN`, treat the immediately preceding summary, answer,
-    or proposed interpretation as confirmed and continue to the next unresolved
-    item.
-16. `GROEN` does not approve Azure commands, deployments, destructive actions,
-    secrets handling, or unrelated changes.
-17. End every response with exactly one next question or one explicit request
-    for confirmation.
-18. Do not advance to a later interview phase while an earlier blocking question
-    remains unresolved.
+### Opening question
+
+1. Ask the first business-purpose question by itself.
+2. Use the answer to determine which interview phases and topics are relevant.
+3. Do not ask for technical implementation details until the business purpose,
+   users, outcome, and initial scope are understood.
+
+### Adaptive question batches
+
+1. Ask two to four closely related, independent questions as a numbered batch.
+2. Never include more than four primary questions in one response.
+3. Keep each numbered question focused on one decision or fact.
+4. Keep dependent questions separate when an earlier answer can change the later question.
+5. Do not present the complete interview questionnaire at once.
+6. Skip questions already answered by the user, repository evidence, or confirmed
+   inventory evidence.
+7. Skip sections that are demonstrably irrelevant.
+8. Reopen a skipped section when a later answer makes it relevant.
+9. Accept partial batch answers and continue only with the unanswered relevant questions.
+10. Treat `unknown`, `TBD`, `not applicable`, and `use existing` as valid explicit answers.
+11. Record `unknown` and `TBD` as unresolved; determine whether each unresolved
+    answer blocks handoff.
+12. Record `not applicable` as an explicit scoped decision with its rationale.
+13. Resolve `use existing` to identified repository or inventory evidence; ask
+    for clarification when no unique existing resource can be determined.
+14. Provide two to five mutually exclusive answer options when that improves
+    clarity.
+15. Put the recommended option first and explain why it is recommended.
+16. Always permit a free-form answer.
+17. Explain the consequence of each material choice without overwhelming the
+    question batch.
+
+### Scope-wide answers
+
+1. Apply an explicitly scoped answer to every applicable resource or topic.
+2. Do not ask the same ownership, reuse, or immutability question again for resources covered by that scope.
+3. Record the scope rule and preserve any explicitly stated exceptions.
+4. Ask for clarification instead of generalizing when the scope is ambiguous.
+5. Do not widen an answer beyond the scope explicitly stated by the user.
+6. If a later answer conflicts with a scope rule, identify the conflict and ask
+   whether the exception or the scope rule must change.
+
+### Protected decisions
+
+1. Ask approval, consent, security, destructive-action, and overwrite questions individually.
+2. Never infer approval or authorization from a batch answer or a scope-wide answer.
+3. Treat `GROEN` only as confirmation of the immediately preceding summary,
+   answer, or proposed interpretation.
+4. `GROEN` does not approve Azure commands, deployments, destructive actions,
+   secrets handling, overwrite operations, or unrelated changes.
+5. Ask a high-impact question again when the answer is ambiguous.
+
+### Progress and phase transitions
+
+1. Confirm a major section with a concise summary before moving to the next
+   major section.
+2. Do not require confirmation after every ordinary answer.
+3. Periodically summarize confirmed facts, scope rules, assumptions, exceptions,
+   and unresolved blockers.
+4. Do not advance to a later interview phase while an earlier blocking question
+   remains unresolved.
+5. End each response with one of:
+   - a numbered adaptive question batch;
+   - one isolated protected question;
+   - one section-summary confirmation request;
+   - a completed and validated handoff.
+6. Do not repeat unchanged boilerplate after every answer.
+7. Preserve confirmed answers and identifiers when the interview resumes.
+
+### Completion and handoff
+
+1. Generate both `azure-context.md` and `azure-context.json` before declaring the interview complete.
+2. Publish Markdown and JSON from the same confirmed interview state.
+3. Validate `azure-context.json` before setting `readyForSpecification` to `true`.
+4. Set readiness to false when:
+   - a required field is missing;
+   - a blocking question remains;
+   - a critical assumption remains unvalidated;
+   - Markdown and JSON disagree;
+   - schema or semantic validation fails.
+5. Do not recommend specification or design generation while a blocking question remains or JSON validation fails.
+6. Never construct, guess, or silently repair missing Azure resource identifiers
+   during handoff.
+7. Keep user-confirmed facts, repository evidence, Azure evidence, assumptions,
+   and recommendations distinguishable.
+8. When handoff validation fails, report the exact failing field or invariant,
+   retain the interview as in progress, and ask only the questions needed to
+   resolve the failure.
+
+## Batch Planning Algorithm
+
+Plan every response from the current confirmed interview state. Do not maintain
+a hidden fixed questionnaire.
+
+Apply these steps in order:
+
+1. Build the candidate-question set from the earliest incomplete phase.
+2. Remove questions answered by confirmed facts, scope rules, or applicable evidence.
+3. Remove questions made irrelevant by earlier answers and record why they were skipped.
+4. Mark approval, consent, security, destructive-action, overwrite, and ambiguous
+   conflict-resolution questions as protected.
+5. Select only questions that can be answered independently in the current state.
+6. Select questions from one topic cluster only and preserve their documented order.
+7. Stop adding questions when the batch contains four questions.
+8. When only one ordinary candidate remains in the cluster, ask that one question
+   without adding unrelated questions.
+9. Do not combine questions from different interview phases in one batch.
+10. Do not include a phase-confirmation request in a question batch.
+11. Do not include a protected decision in an ordinary question batch.
+12. Do not batch a question with its possible follow-up question.
+13. After processing the answers, recompute the candidate set instead of using a precomputed questionnaire.
+
+When repository or inventory evidence proposes an answer, include that proposed
+answer in the relevant question. Evidence can reduce the number of questions,
+but it cannot silently confirm a decision.
+
+## Question Clusters
+
+Use these clusters to group closely related questions. The listed subjects are
+selection boundaries, not a requirement to ask every question.
+
+### Workload foundation cluster
+
+Use during the business and workload-discovery phase for independent questions
+about:
+
+- workload name and business capability;
+- intended users or consumers;
+- business owner and technical owner;
+- desired outcome and measurable success;
+- initial in-scope and out-of-scope boundaries.
+
+Ask the initial business-purpose question separately. Build a workload-foundation
+batch only after that answer establishes enough context.
+
+### Azure estate and placement cluster
+
+Use during Azure estate and placement discovery for independent questions about:
+
+- tenant and subscription placement;
+- resource-group placement;
+- primary and secondary regions;
+- data-residency constraints;
+- applicable management-group and landing-zone boundaries.
+
+Do not combine an unresolved tenant or subscription identity with downstream
+resource-placement questions that depend on that identity.
+
+### Existing-resource boundaries cluster
+
+Use during brownfield resource discovery for independent questions about:
+
+- which identified resources must be reused;
+- ownership of existing resources;
+- allowed configuration changes;
+- resources that must remain unchanged;
+- exceptions to a scope-wide reuse or immutability rule.
+
+Prefer one explicit scope-wide question over repeating ownership, reuse, or
+immutability questions for every resource.
+
+### Network and private-connectivity cluster
+
+Use during network discovery for independent questions about:
+
+- hub-and-spoke placement;
+- existing spoke and subnet reuse;
+- private endpoints;
+- private DNS integration;
+- centralized ingress, egress, and firewall dependencies.
+
+Do not ask for dependent subnet, route, DNS, or firewall decisions until the
+relevant network topology and resource identities are known.
+
+### Governance and operations cluster
+
+Use during governance and operational discovery for independent questions about:
+
+- identity and access boundaries;
+- diagnostics and Log Analytics;
+- availability and recovery requirements;
+- cost ownership and budget constraints;
+- deployment, support, and operational ownership.
+
+Keep authorization, security exceptions, destructive actions, and deployment
+approval outside ordinary batches.
+
+## Batch Response Protocol
+
+Render an ordinary batch using a short topic heading followed by numbered
+questions.
+
+For every batch:
+
+1. Give every question a stable question ID.
+2. Number questions from 1 through the batch size.
+3. Show the stable question ID next to the display number.
+4. Tell the user that answers may be provided by number and that unanswered numbers remain open.
+5. Tell the user that `unknown`, `TBD`, `not applicable`, and `use existing` are
+   accepted when applicable.
+6. Do not require the user to repeat the full question text.
+7. Map each supplied answer to its question ID before updating interview state.
+8. Do not reinterpret one answer as applying to another question unless the user explicitly scopes it.
+9. Preserve unanswered questions without treating them as declined or confirmed.
+10. Apply explicit scope-wide answers before computing follow-up questions.
+11. Detect contradictions between new answers, confirmed facts, and scope rules.
+12. Acknowledge the accepted answers once, then ask only the next relevant batch.
+
+Use this response shape:
+
+    <Topic heading>
+
+    1. [OQ-nnn] <first question>
+    2. [OQ-nnn] <second question>
+    3. [OQ-nnn] <third question>
+
+    Answer by number. You may leave a number unanswered or use:
+    unknown, TBD, not applicable, or use existing.
+
+Do not add an empty fourth question merely to reach the maximum batch size.
+Do not repeat the complete readiness report after an ordinary batch response.
 
 ## Evidence Classification
 
@@ -783,14 +977,56 @@ If the gate fails:
 - Continue with the earliest and highest-impact missing question.
 - Do not generate a handoff instruction.
 
-If the gate passes:
+If the preliminary gate conditions pass:
 
-- Generate the machine-readable JSON artifact.
-- Validate the JSON artifact.
-- Set interview status to `Complete`.
-- Set `readyForSpecification` to `true`.
-- Set all readiness counters to zero.
-- Ask the user for final confirmation before producing the handoff.
+- Present one concise final summary of confirmed facts, scope rules, assumptions,
+  exceptions, deferred non-blocking items, and intended handoff status.
+- Ask the user to confirm that final summary.
+- Do not mark either artifact complete before that confirmation.
+- After confirmation, execute the Completion Transaction exactly once.
+- Do not ask for a second final confirmation after successful publication.
+
+## Completion Transaction
+
+Execute these steps in order. A later step must not run when an earlier step
+fails.
+
+1. Build one canonical final context state only after the user confirms the final summary.
+2. Set the canonical state to a complete interview, readiness for specification,
+   zero blocking questions, and zero unvalidated critical assumptions.
+3. Render candidate Markdown and JSON from that same canonical state.
+4. Write both candidates to temporary files in their destination directory.
+5. Validate the candidate JSON against the packaged schema and semantic validator.
+6. Confirm that the candidate Markdown represents the same status, readiness,
+   counters, decisions, assumptions, dependencies, and open questions.
+7. Preserve recoverable copies of existing destination artifacts when either
+   destination already exists.
+8. Publish both final artifacts only after candidate validation succeeds.
+9. If replacement of either destination fails, restore every destination already
+   replaced during this transaction.
+10. Validate the persisted JSON again after publication before providing handoff instructions.
+11. Confirm that persisted Markdown and JSON both report a complete interview.
+12. Confirm that persisted Markdown and JSON both report readiness for specification.
+13. Confirm that the persisted blocking-question and critical-assumption counts are zero.
+14. Remove temporary and recovery files only after all post-publication checks
+    succeed.
+15. Provide specification and design handoff instructions only after all post-publication checks succeed.
+
+Failure handling:
+
+- If candidate rendering or validation fails, do not publish either candidate.
+- Keep the interview status `In Progress` or `Blocked` and keep readiness set to `No`.
+- Do not leave `azure-context.md` claiming completion when `azure-context.json` is absent or invalid.
+- Never ask a downstream command to construct or repair the interview context.
+- Preserve confirmed interview information.
+- Report the exact field, invariant, file operation, or validator error that
+  blocked completion.
+- Recompute only the questions required to resolve the failure.
+- Do not claim that specification or design generation can begin.
+
+The transaction governs the two final handoff artifacts. The in-progress
+Markdown draft may continue to exist before finalization, but it must clearly
+report `In Progress` or `Blocked` and readiness `No`.
 
 ## JSON Generation Requirements
 

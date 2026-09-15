@@ -217,7 +217,7 @@ Invoke the generated skill:
 
 Verify that the interview:
 
-- Asks one primary question at a time.
+- Asks the business-purpose question separately and then uses numbered batches of two to four related questions.
 - Starts with the specific business capability or problem.
 - Does not immediately ask for architecture details.
 - Creates or updates `.specify/discovery/azure-context.md`.
@@ -251,7 +251,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 ```
 
 Verify the generated skill:
@@ -344,7 +344,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 ```
 
 Accept the expected external-source warning only after verifying the archive
@@ -360,7 +360,7 @@ specify extension info azure-interview
 Expected installation output includes:
 
 ```text
-Spec Kit Azure Interview (v0.6.0)
+Spec Kit Azure Interview (v0.7.0)
 1 agent skill(s) auto-registered
 ```
 
@@ -414,7 +414,7 @@ $CopilotSkill = `
 Select-String `
     -Path $CopilotSkill `
     -Pattern `
-        "Ask exactly one primary question per response",
+        "Ask the first business-purpose question by itself.",
         "specific business capability or problem",
         "Create JSON only when",
         "Do not generate deployable infrastructure code"

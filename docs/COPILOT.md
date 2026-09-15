@@ -23,7 +23,7 @@ The following behavior has been verified without consuming paid Copilot usage:
 The following behavior has not yet been verified by the project maintainer:
 
 - Copilot following the full adaptive interview.
-- Copilot asking exactly one primary question per response.
+- Copilot isolating the first business-purpose question and then asking adaptive numbered batches.
 - Copilot maintaining the Markdown artifact across multiple turns.
 - Copilot delaying JSON generation until final readiness.
 - Copilot respecting every Azure discovery and safety guardrail.
@@ -184,11 +184,11 @@ Expected values include:
 
 ## Install Spec Kit Azure Interview
 
-Install the immutable `v0.6.0` release archive:
+Install the immutable `v0.7.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because this extension is installed
@@ -343,7 +343,9 @@ Copilot must not yet:
 
 ## Continue the Interview
 
-Answer one primary question at a time.
+Answer the opening business-purpose question first. Later responses may answer
+a numbered batch of two to four related questions. Partial answers are allowed;
+unanswered numbers remain open.
 
 The interview should continuously maintain:
 
@@ -437,7 +439,7 @@ Community behavioral testing should verify that Copilot:
 
 - Activates the intended skill.
 - Creates the Markdown discovery artifact.
-- Asks only one primary question per response.
+- Asks one opening business-purpose question followed by adaptive batches of no more than four related questions.
 - Starts with business purpose.
 - Adapts later questions to previous answers.
 - Tracks contradictions.
@@ -542,7 +544,7 @@ Reinstall the released extension only after reviewing the target project:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip `
     --force
 ```
 

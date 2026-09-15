@@ -17,6 +17,50 @@ and this project adheres to
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
+## [0.7.0] - 2026-09-15
+
+### Added
+
+- Adaptive numbered interview batches containing two to four closely related,
+  independent questions.
+- Deterministic batch planning based on phase, topic cluster, dependencies,
+  prior answers, repository evidence, and confirmed inventory evidence.
+- Explicit question clusters for workload foundation, Azure placement,
+  existing-resource boundaries, networking, governance, and operations.
+- Support for partial batch responses and explicit `unknown`, `TBD`,
+  `not applicable`, and `use existing` answers.
+- Scope-wide answer generalization with explicit exception handling.
+- A synchronized completion transaction for final Markdown and JSON artifacts.
+- Rollback and post-publication validation requirements for interview handoff
+  artifacts.
+- Public documentation and examples for answering adaptive question batches.
+
+### Changed
+
+- The first business-purpose question remains isolated, while later independent
+  questions can be asked efficiently in related batches.
+- Interview phases now recompute applicable questions after every response
+  instead of following a fixed questionnaire.
+- Existing-resource and inventory reconciliation can confirm scoped evidence in
+  bulk without inferring modification permission.
+- Protected decisions remain isolated from ordinary adaptive batches.
+- Final handoff instructions are provided only after persisted Markdown and JSON
+  both pass completion and readiness verification.
+- Updated active installation examples and package metadata to v0.7.0.
+
+### Security
+
+- Approval, consent, security exceptions, destructive actions, overwrite
+  permission, and modification permission remain individually attributable
+  protected decisions.
+- Repository and inventory evidence can propose answers but cannot silently
+  confirm human decisions.
+- Failed candidate validation cannot publish a partially complete handoff.
+- Failed artifact replacement requires restoration of previously replaced
+  interview artifacts.
+- Downstream commands cannot construct or repair an incomplete interview
+  context.
+
 ## [0.6.0] - 2026-09-15
 
 ### Added
@@ -254,7 +298,8 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.3.0...v0.4.0
