@@ -251,7 +251,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
 ```
 
 Verify the generated skill:
@@ -344,7 +344,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
 ```
 
 Accept the expected external-source warning only after verifying the archive
@@ -360,7 +360,7 @@ specify extension info azure-interview
 Expected installation output includes:
 
 ```text
-Spec Kit Azure Interview (v0.5.0)
+Spec Kit Azure Interview (v0.6.0)
 1 agent skill(s) auto-registered
 ```
 
@@ -648,3 +648,74 @@ A manual smoke test must also verify that:
 
 The smoke test confirms rendering compatibility only. It does not approve the
 design or verify deployed Azure state.
+## Azure Design-Review Tests
+
+The intended-design review implementation is covered by:
+
+```text
+tests/test_review_azure_design.py
+```
+
+Run the focused suite:
+
+```powershell
+python -m pytest `
+    .\tests\test_review_azure_design.py `
+    -q
+```
+
+The suite validates:
+
+- the Draft 2020-12 review schema;
+- strict required properties and rejection of unknown properties;
+- approved and rejected decision invariants;
+- normalized reviewer identity and UTC timestamps;
+- required actionable findings for rejection;
+- prohibition of unresolved findings on approval;
+- canonical design-model references;
+- deterministic lowercase SHA-256 design digest generation;
+- constant-time design digest verification;
+- safe Markdown escaping;
+- project-local path constraints;
+- duplicate output-path rejection;
+- overwrite protection for existing terminal reviews;
+- synchronized Markdown, SVG, and Draw.io status rendering;
+- valid SVG and Draw.io XML;
+- transactional publication of all six artifacts;
+- rollback behavior after replacement failure;
+- controlled CLI success and error reporting;
+- direct executable entry-point behavior.
+
+The design digest tests verify that the review remains bound to the exact final
+serialized design model. Changing reviewed design content must cause digest
+verification to fail.
+
+The transactional publication tests inject replacement failures and verify that
+the original artifacts are restored. A failed review must not intentionally
+leave a mixed approved, rejected, or unreviewed artifact set.
+
+Run the combined design and review regression suites:
+
+```powershell
+python -m pytest `
+    .\tests\test_generate_azure_design.py `
+    .\tests\test_review_azure_design.py `
+    -q
+```
+
+The generator suite must remain green because review publication reuses its
+Mermaid, Markdown, SVG, and Draw.io renderers.
+
+Before release, also run:
+
+```powershell
+python -m ruff format --check .\scripts .\tests
+python -m ruff check .\scripts .\tests
+python -m yamllint .\extension.yml .\.yamllint.yml .\.github
+python -m pytest -q
+python -m json.tool .\templates\azure-design-review.schema.json
+git diff --check
+```
+
+A successful test run does not itself approve an intended design. Approval
+still requires an explicit attributable human decision.

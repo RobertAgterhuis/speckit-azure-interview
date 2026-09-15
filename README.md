@@ -162,7 +162,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
 Verify the installation:
 
 ```powershell
@@ -324,7 +324,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
 ```
 
 Spec Kit generates the project-local skill at:
@@ -588,4 +588,43 @@ Review planned and existing resources, ownership boundaries, network paths,
 private endpoints, diagnostic settings, and dependencies before implementation.
 
 See [Azure Intended Design](docs/AZURE-DESIGN.md) for prerequisites, artifact
-contracts, overwrite protection, security boundaries, and the review workflow.
+contracts, overwrite protection, and design-generation boundaries.
+
+## Azure Intended Design Review
+
+After reviewing the generated architecture, record the explicit human decision
+with:
+
+    /speckit.azure-interview.design-review
+
+The command accepts only `approved` or `rejected`.
+
+An approved decision:
+
+- requires a named human reviewer;
+- permits no unresolved findings;
+- sets the design `reviewStatus` to `approved`;
+- records `implementationAuthorized: true`.
+
+A rejected decision:
+
+- requires at least one actionable finding;
+- sets the design `reviewStatus` to `rejected`;
+- records `implementationAuthorized: false`.
+
+The synchronized review transaction creates:
+
+- `.specify/design/azure-design-review.json`;
+- `.specify/design/azure-design-review.md`.
+
+It also updates the design model, Markdown overview, SVG, and Draw.io artifacts
+with the terminal review status. The JSON review binds the decision to the exact
+reviewed model through a lowercase SHA-256 digest.
+
+Approval authorizes progression to the next documented Spec Kit stage. It does
+not deploy resources, grant Azure permissions, or prove deployed Azure state.
+
+See
+[Azure Intended Design Review](docs/AZURE-DESIGN-REVIEW.md)
+for decision rules, examples, digest verification, overwrite protection,
+transactional publication, and troubleshooting.

@@ -55,6 +55,8 @@ Azure Interview
     ↓
 Intended Design Review
     ↓
+Design Review Decision
+    ↓
 Specify
     ↓
 Clarify (optional)
@@ -71,6 +73,7 @@ Implement
     ↓
 Converge until complete
 ```
+
 ## Optional Azure Inventory Discovery
 
 For brownfield, migration, or extension work, inventory the approved Azure
@@ -262,11 +265,11 @@ review the affected files before using `--force`.
 
 ## 5. Install Spec Kit Azure Interview
 
-Install the immutable `v0.5.0` release archive:
+Install the immutable `v0.6.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is not yet
@@ -288,7 +291,7 @@ specify extension info azure-interview
 Expected extension:
 
 ```text
-Spec Kit Azure Interview (v0.5.0)
+Spec Kit Azure Interview (v0.6.0)
 ```
 
 Expected command:
@@ -802,7 +805,7 @@ Correct:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.5.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
 ```
 
 The `--from` value must point to a ZIP, tar.gz, or tgz archive.
@@ -901,3 +904,83 @@ To replace an existing set after explicit approval, run:
 
 See [Azure Intended Design](docs/AZURE-DESIGN.md) for the complete workflow and
 security boundaries.
+## Record the Intended Design Decision
+
+After inspecting the intended-design model, Markdown overview, SVG, and
+editable Draw.io diagram, record the explicit human decision with:
+
+```text
+/speckit.azure-interview.design-review
+```
+
+Run this command from the supported AI assistant. Do not enter it directly in
+PowerShell.
+
+The command accepts only:
+
+```text
+approved
+rejected
+```
+
+An approved decision requires a named human reviewer and no unresolved
+findings. It records:
+
+```text
+reviewStatus: approved
+implementationAuthorized: true
+```
+
+A rejected decision requires at least one actionable finding. It records:
+
+```text
+reviewStatus: rejected
+implementationAuthorized: false
+```
+
+The review creates:
+
+- `.specify/design/azure-design-review.json`;
+- `.specify/design/azure-design-review.md`.
+
+It synchronizes the terminal review status across the design model, Markdown
+overview, SVG, and Draw.io diagram. The JSON record binds the decision to the
+exact reviewed model with a lowercase SHA-256 digest.
+
+For direct execution from the consumer project, approval can be recorded with:
+
+```powershell
+python `
+    .\.specify\extensions\azure-interview\scripts\python\review_azure_design.py `
+    --decision approved `
+    --reviewer "Human reviewer" `
+    --comment "Architecture approved for implementation."
+```
+
+A rejection requires one or more findings:
+
+```powershell
+python `
+    .\.specify\extensions\azure-interview\scripts\python\review_azure_design.py `
+    --decision rejected `
+    --reviewer "Human reviewer" `
+    --finding "Confirm the production subnet address space."
+```
+
+Existing terminal review artifacts are protected. Use `--overwrite` only after
+the user explicitly authorizes replacing the synchronized review record.
+
+Continue to Specify only when:
+
+```text
+reviewStatus: approved
+implementationAuthorized: true
+```
+
+Approval does not deploy Azure resources and does not prove deployed Azure
+state.
+
+See
+[Azure Intended Design Review](docs/AZURE-DESIGN-REVIEW.md)
+for the complete decision, digest, overwrite, transactional publication, and
+troubleshooting guidance.

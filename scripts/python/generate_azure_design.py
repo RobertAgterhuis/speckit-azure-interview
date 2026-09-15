@@ -904,6 +904,10 @@ def render_drawio_diagram(
     )
     nodes = architecture["nodes"]
     relationships = architecture["relationships"]
+    review_status = escape(
+        normalize_markdown_text(design.get("reviewStatus")),
+        quote=True,
+    )
 
     preferred_positions: dict[str, tuple[int, int]] = {
         "network:hub": (60, 180),
@@ -1107,8 +1111,31 @@ def render_drawio_diagram(
             ]
         )
 
+    status_value = f"Review status: {review_status} — not evidence of deployed Azure state"
+    status_style = (
+        "text;"
+        "html=0;"
+        "strokeColor=none;"
+        "fillColor=none;"
+        "align=left;"
+        "verticalAlign=middle;"
+        "whiteSpace=wrap;"
+        "rounded=0;"
+        "fontFamily=Segoe UI;"
+        "fontSize=14;"
+        "fontColor=#52606D;"
+    )
+
     lines.extend(
         [
+            (
+                '        <mxCell id="review-status" '
+                f'value="{status_value}" '
+                f'style="{status_style}" vertex="1" '
+                'parent="1">'
+            ),
+            ('          <mxGeometry x="60" y="840" width="1280" height="30" as="geometry" />'),
+            "        </mxCell>",
             "      </root>",
             "    </mxGraphModel>",
             "  </diagram>",
@@ -1131,6 +1158,11 @@ def render_svg_diagram(
     workload_name = normalize_markdown_text(workload.get("name"))
     escaped_workload_name = escape(
         workload_name,
+        quote=True,
+    )
+    review_status = normalize_markdown_text(design.get("reviewStatus"))
+    escaped_review_status = escape(
+        review_status,
         quote=True,
     )
 
@@ -1369,7 +1401,7 @@ def render_svg_diagram(
                 '  <text x="60" y="850" '
                 'font-family="Segoe UI, Arial, sans-serif" '
                 'font-size="14" fill="#52606D">'
-                "Review status: unreviewed — "
+                f"Review status: {escaped_review_status} — "
                 "not evidence of deployed Azure state"
                 "</text>"
             ),

@@ -447,3 +447,65 @@ atomically. An existing artifact set requires explicit `--overwrite` approval.
 As-built verification remains a separate future layer. It must compare deployed
 Azure state with the approved intended design without rewriting the original
 design record.
+## Design Review Evidence
+
+The intended-design review layer records an explicit human decision about one
+exact intended architecture.
+
+The layer consists of:
+
+- `.specify/design/azure-design-review.json`;
+- `.specify/design/azure-design-review.md`;
+- `templates/azure-design-review.schema.json`;
+- `scripts/python/review_azure_design.py`.
+
+The machine-readable review records:
+
+- the terminal decision: `approved` or `rejected`;
+- the human reviewer identity;
+- the UTC review timestamp;
+- optional reviewer commentary;
+- actionable findings for a rejected design;
+- the `implementationAuthorized` control value;
+- a lowercase SHA-256 digest of the final reviewed design model.
+
+The SHA-256 digest binds the review to the exact serialized content of
+`.specify/design/azure-design-model.json`. A later change to the design changes
+the digest and invalidates the earlier review relationship.
+
+Approval produces:
+
+- `reviewStatus: approved`;
+- `implementationAuthorized: true`;
+- no unresolved findings.
+
+Rejection produces:
+
+- `reviewStatus: rejected`;
+- `implementationAuthorized: false`;
+- at least one actionable finding.
+
+The review operation publishes one synchronized transaction containing:
+
+1. the reviewed design model;
+2. the regenerated Markdown design overview;
+3. the regenerated SVG diagram;
+4. the regenerated Draw.io diagram;
+5. the JSON review record;
+6. the Markdown review summary.
+
+All artifacts are rendered and validated before publication. Each target is
+staged in its destination directory. If replacement fails, previously replaced
+targets are restored so the operation does not intentionally leave a partial
+review state.
+
+Existing terminal review artifacts require explicit `--overwrite` approval.
+All input and output artifacts remain constrained to the consumer project's
+`.specify/design` directory.
+
+The review layer does not query Azure, perform Azure write operations, deploy
+resources, grant permissions, or prove deployed Azure state.
+
+`implementationAuthorized: true` permits progression to the next documented
+Spec Kit stage. It is a governance signal, not an Azure RBAC grant or deployment
+action.

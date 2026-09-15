@@ -1964,7 +1964,7 @@ def test_render_drawio_diagram_contains_all_model_elements(
     )
     root = ET.fromstring(generator_module.render_drawio_diagram(design))
 
-    node_cells = root.findall(".//mxCell[@vertex='1']")
+    node_cells = root.findall(".//mxCell[@data-node-id]")
     relationship_cells = root.findall(".//mxCell[@edge='1']")
 
     assert len(node_cells) == 8
@@ -1990,7 +1990,7 @@ def test_render_drawio_diagram_distinguishes_resource_state(
     )
     root = ET.fromstring(generator_module.render_drawio_diagram(design))
 
-    node_cells = root.findall(".//mxCell[@vertex='1']")
+    node_cells = root.findall(".//mxCell[@data-node-id]")
     existing_cells = [cell for cell in node_cells if cell.attrib["data-state"] == "existing"]
     planned_cells = [cell for cell in node_cells if cell.attrib["data-state"] == "planned"]
 
@@ -2146,7 +2146,7 @@ def test_render_drawio_diagram_uses_structured_html_labels(
     )
     root = ET.fromstring(generator_module.render_drawio_diagram(design))
 
-    node_cells = root.findall(".//mxCell[@vertex='1']")
+    node_cells = root.findall(".//mxCell[@data-node-id]")
     hub = next(cell for cell in node_cells if cell.attrib["data-node-id"] == "network:hub")
 
     assert hub.attrib["value"] == (

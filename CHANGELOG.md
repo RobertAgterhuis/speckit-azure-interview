@@ -17,6 +17,57 @@ and this project adheres to
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
+## [0.6.0] - 2026-09-15
+
+### Added
+
+- `speckit.azure-interview.design-review` explicit intended-design review
+  command.
+- `scripts/python/review_azure_design.py` executable review workflow.
+- `templates/azure-design-review.schema.json` terminal review contract.
+- Machine-readable `.specify/design/azure-design-review.json` evidence.
+- Human-readable `.specify/design/azure-design-review.md` summary.
+- Explicit `approved` and `rejected` decision invariants.
+- Named human reviewer and UTC review timestamp requirements.
+- Lowercase SHA-256 digest binding to the final reviewed design model.
+- `implementationAuthorized` workflow-control value.
+- Rejection findings with actionable validation.
+- Synchronized review status in Markdown, SVG, and Draw.io artifacts.
+- Transactional six-artifact publication with rollback behavior.
+- Dedicated Azure Intended Design Review operator guide.
+- Starlight command and design-review evidence pages.
+- Comprehensive schema, semantic, rendering, transaction, and CLI tests.
+
+### Changed
+
+- Updated the extension and documentation package versions to `0.6.0`.
+- Registered the review command, schema, and executable in `extension.yml`.
+- Extended the documented lifecycle with a Design Review Decision before
+  Specify.
+- Updated active installation examples to the immutable v0.6.0 archive.
+- Made SVG and Draw.io review-status rendering dynamic.
+- Updated Draw.io tests to identify architecture nodes through stable
+  `data-node-id` attributes.
+- Extended README, Quick Start, architecture, testing, Codex, Copilot, and
+  Starlight documentation.
+
+### Fixed
+
+- Added a narrow Git ignore exception so Starlight artifact documentation is
+  included in source control and GitHub Pages builds.
+
+### Security
+
+- Approval requires an explicit attributable human decision.
+- Approval cannot contain unresolved findings.
+- Rejection requires at least one actionable finding.
+- Existing terminal reviews cannot be replaced without `--overwrite`.
+- Review inputs and outputs remain constrained to `.specify/design`.
+- Review records are cryptographically bound to exact design content.
+- Publication failures restore previously replaced artifacts.
+- Review generation performs no Azure write operations and does not prove
+  deployed Azure state.
+
 ## [0.5.0] - 2026-09-14
 
 ### Added
@@ -203,7 +254,8 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.2.0...v0.3.0
