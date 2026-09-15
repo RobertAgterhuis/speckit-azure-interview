@@ -1,0 +1,85 @@
+name: Documentation
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/pages.yml"
+      - "astro.config.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "site-docs/**"
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/pages.yml"
+      - "astro.config.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "site-docs/**"
+  workflow_dispatch:
+
+concurrency:
+  group: "github-pages"
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Starlight documentation
+    runs-on: ubuntu-latest
+
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate documentation
+        run: npm run check
+
+      - name: Build documentation
+        run: npm run build
+
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "./dist"
+
+  deploy:
+    name: Deploy GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy documentation
+        id: deployment
+        uses: actions/deploy-pages@v4
