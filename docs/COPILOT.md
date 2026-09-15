@@ -188,7 +188,7 @@ Install the immutable `v0.7.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because this extension is installed
@@ -544,7 +544,7 @@ Reinstall the released extension only after reviewing the target project:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip `
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip `
     --force
 ```
 
@@ -607,6 +607,7 @@ private endpoints, diagnostics, and dependencies before implementation.
 Use `--overwrite` only after explicit user approval.
 
 See [Azure Intended Design](AZURE-DESIGN.md) for the complete workflow.
+
 ## Review the Intended Azure Design
 
 After generating and inspecting the intended architecture, invoke:

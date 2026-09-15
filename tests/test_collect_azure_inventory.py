@@ -97,7 +97,7 @@ def test_build_account_show_command_is_read_only(
 def test_build_resource_graph_command_scopes_query_to_subscription(
     collector_module: ModuleType,
 ) -> None:
-    """Resource Graph queries must remain scoped to the approved subscription."""
+    """Resource Graph queries remain scoped and use bounded pages."""
     query = "Resources | project id, name, type, location, resourceGroup"
     command = collector_module.build_resource_graph_command(
         SUBSCRIPTION_ID,
@@ -112,6 +112,8 @@ def test_build_resource_graph_command_scopes_query_to_subscription(
         SUBSCRIPTION_ID,
         "--graph-query",
         query,
+        "--first",
+        "1000",
         "--output",
         "json",
         "--only-show-errors",
@@ -924,7 +926,7 @@ def test_write_inventory_document_allows_explicit_overwrite(
 def test_collect_inventory_runs_scoped_read_only_workflow(
     collector_module: ModuleType,
 ) -> None:
-    """Collection validates context before querying scoped resource metadata."""
+    """Collection validates context before running seven paged queries."""
     account_response = {
         "id": SUBSCRIPTION_ID,
         "name": "Production",
@@ -963,6 +965,14 @@ def test_collect_inventory_runs_scoped_read_only_workflow(
             stderr="",
         ),
     ]
+    responses.extend(
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"data": []}),
+            stderr="",
+        )
+        for _ in collector_module.TOPOLOGY_RELATIONSHIP_QUERIES
+    )
     observed_commands: list[list[str]] = []
 
     def fake_runner(
@@ -986,13 +996,22 @@ def test_collect_inventory_runs_scoped_read_only_workflow(
         runner=fake_runner,
     )
 
-    assert observed_commands == [
+    expected_commands = [
         collector_module.build_account_show_command(),
         collector_module.build_resource_graph_command(
             SUBSCRIPTION_ID,
             collector_module.RESOURCE_INVENTORY_QUERY,
         ),
     ]
+    expected_commands.extend(
+        collector_module.build_resource_graph_command(
+            SUBSCRIPTION_ID,
+            query,
+        )
+        for _, query in collector_module.TOPOLOGY_RELATIONSHIP_QUERIES
+    )
+
+    assert observed_commands == expected_commands
     assert document["scope"] == {
         "subscriptionId": SUBSCRIPTION_ID,
         "subscriptionName": "Production",
@@ -1000,6 +1019,14 @@ def test_collect_inventory_runs_scoped_read_only_workflow(
     }
     assert document["resourceCount"] == 1
     assert document["evidenceStatus"] == "unconfirmed"
+    assert document["topology"] == {
+        "relationshipCount": 0,
+        "relationships": [],
+    }
+    assert document["source"]["topologyQueries"] == [
+        query for _, query in collector_module.TOPOLOGY_RELATIONSHIP_QUERIES
+    ]
+    assert "topologyQuery" not in document["source"]
     assert responses == []
 
 
@@ -1138,7 +1165,20 @@ def test_run_collects_validates_and_writes_inventory(
             stdout=json.dumps(graph_response),
             stderr="",
         ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"data": []}),
+            stderr="",
+        ),
     ]
+    responses.extend(
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"data": []}),
+            stderr="",
+        )
+        for _ in range(len(collector_module.TOPOLOGY_RELATIONSHIP_QUERIES) - 1)
+    )
 
     def fake_runner(
         command: list[str],
@@ -1206,7 +1246,20 @@ def test_main_reports_successful_unconfirmed_collection(
             stdout=json.dumps({"data": []}),
             stderr="",
         ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"data": []}),
+            stderr="",
+        ),
     ]
+    responses.extend(
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"data": []}),
+            stderr="",
+        )
+        for _ in range(len(collector_module.TOPOLOGY_RELATIONSHIP_QUERIES) - 1)
+    )
 
     def fake_runner(
         command: list[str],
@@ -1383,3 +1436,1138 @@ def test_run_stops_before_azure_when_output_exists(
 
     assert azure_called is False
     assert json.loads(output_path.read_text(encoding="utf-8")) == {"existing": True}
+
+
+def build_topology_relationship(
+    *,
+    relationship_type: str = "vnet-contains-subnet",
+    source_resource_id: str | None = None,
+    source_resource_type: str = "microsoft.network/virtualnetworks",
+    target_resource_id: str | None = None,
+    target_resource_type: str = "microsoft.network/virtualnetworks/subnets",
+    target_scope: str = "in-scope",
+) -> dict[str, object]:
+    """Build representative controlled topology evidence."""
+    effective_source_id = source_resource_id or (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-hub"
+    )
+    effective_target_id = target_resource_id or (
+        f"{effective_source_id}/subnets/AzureFirewallSubnet"
+    )
+
+    return {
+        "relationshipType": relationship_type,
+        "sourceResourceId": effective_source_id,
+        "sourceResourceType": source_resource_type,
+        "targetResourceId": effective_target_id,
+        "targetResourceType": target_resource_type,
+        "targetScope": target_scope,
+    }
+
+
+def test_inventory_schema_accepts_optional_brownfield_topology(
+    collector_module: ModuleType,
+) -> None:
+    """Topology evidence is an optional backward-compatible inventory extension."""
+    schema = load_inventory_schema()
+    document = build_valid_inventory_document(collector_module)
+    document["topology"] = {
+        "relationshipCount": 1,
+        "relationships": [
+            build_topology_relationship(),
+        ],
+    }
+
+    validator = Draft202012Validator(
+        schema,
+        format_checker=Draft202012Validator.FORMAT_CHECKER,
+    )
+
+    assert list(validator.iter_errors(document)) == []
+
+
+@pytest.mark.parametrize(
+    "relationship_type",
+    [
+        "vnet-contains-subnet",
+        "vnet-peered-with-vnet",
+        "subnet-associated-with-nsg",
+        "subnet-associated-with-route-table",
+        "private-endpoint-placed-in-subnet",
+        "private-dns-zone-linked-to-vnet",
+    ],
+)
+def test_inventory_schema_accepts_supported_topology_relationship_types(
+    collector_module: ModuleType,
+    relationship_type: str,
+) -> None:
+    """The schema permits only the explicitly supported topology vocabulary."""
+    schema = load_inventory_schema()
+    document = build_valid_inventory_document(collector_module)
+    document["topology"] = {
+        "relationshipCount": 1,
+        "relationships": [
+            build_topology_relationship(
+                relationship_type=relationship_type,
+            ),
+        ],
+    }
+
+    validator = Draft202012Validator(
+        schema,
+        format_checker=Draft202012Validator.FORMAT_CHECKER,
+    )
+
+    assert list(validator.iter_errors(document)) == []
+
+
+def test_inventory_schema_rejects_unsupported_topology_relationship(
+    collector_module: ModuleType,
+) -> None:
+    """Arbitrary relationships cannot enter controlled inventory evidence."""
+    schema = load_inventory_schema()
+    document = build_valid_inventory_document(collector_module)
+    document["topology"] = {
+        "relationshipCount": 1,
+        "relationships": [
+            build_topology_relationship(
+                relationship_type="resource-depends-on-resource",
+            ),
+        ],
+    }
+
+    validator = Draft202012Validator(schema)
+
+    assert list(validator.iter_errors(document))
+
+
+def test_normalize_topology_relationships_deduplicates_and_sorts(
+    collector_module: ModuleType,
+) -> None:
+    """Topology relationships are deterministic and case-insensitively unique."""
+    vnet_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-hub"
+    )
+    subnet_id = f"{vnet_id}/subnets/snet-app"
+    nsg_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/networkSecurityGroups/nsg-app"
+    )
+
+    records = [
+        {
+            "relationshipType": "subnet-associated-with-nsg",
+            "sourceResourceId": subnet_id,
+            "sourceResourceType": "microsoft.network/virtualnetworks/subnets",
+            "targetResourceId": nsg_id,
+            "targetResourceType": "microsoft.network/networksecuritygroups",
+        },
+        {
+            "relationshipType": "vnet-contains-subnet",
+            "sourceResourceId": vnet_id,
+            "sourceResourceType": "microsoft.network/virtualnetworks",
+            "targetResourceId": subnet_id,
+            "targetResourceType": "microsoft.network/virtualnetworks/subnets",
+        },
+        {
+            "relationshipType": "subnet-associated-with-nsg",
+            "sourceResourceId": subnet_id.upper(),
+            "sourceResourceType": "Microsoft.Network/virtualNetworks/subnets",
+            "targetResourceId": nsg_id.upper(),
+            "targetResourceType": "Microsoft.Network/networkSecurityGroups",
+        },
+    ]
+
+    relationships = collector_module.normalize_topology_relationships(
+        records,
+        expected_subscription_id=SUBSCRIPTION_ID,
+    )
+
+    assert len(relationships) == 2
+    assert [relationship["relationshipType"] for relationship in relationships] == [
+        "subnet-associated-with-nsg",
+        "vnet-contains-subnet",
+    ]
+    assert all(relationship["targetScope"] == "in-scope" for relationship in relationships)
+
+
+def test_normalize_topology_relationships_classifies_target_scope(
+    collector_module: ModuleType,
+) -> None:
+    """Targets are classified without querying another subscription."""
+    other_subscription_id = "33333333-3333-4333-8333-333333333333"
+    source_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-hub"
+    )
+    external_target_id = (
+        "/subscriptions/"
+        f"{other_subscription_id}"
+        "/resourceGroups/rg-connectivity/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-external"
+    )
+
+    records = [
+        {
+            "relationshipType": "vnet-peered-with-vnet",
+            "sourceResourceId": source_id,
+            "sourceResourceType": "microsoft.network/virtualnetworks",
+            "targetResourceId": external_target_id,
+            "targetResourceType": "microsoft.network/virtualnetworks",
+        },
+        {
+            "relationshipType": "vnet-peered-with-vnet",
+            "sourceResourceId": source_id,
+            "sourceResourceType": "microsoft.network/virtualnetworks",
+            "targetResourceId": None,
+            "targetResourceType": "microsoft.network/virtualnetworks",
+        },
+    ]
+
+    relationships = collector_module.normalize_topology_relationships(
+        records,
+        expected_subscription_id=SUBSCRIPTION_ID,
+    )
+
+    assert [relationship["targetScope"] for relationship in relationships] == [
+        "external-subscription",
+        "unresolved",
+    ]
+
+
+def test_normalize_topology_relationships_rejects_external_source(
+    collector_module: ModuleType,
+) -> None:
+    """Every relationship source must belong to the approved subscription."""
+    other_subscription_id = "33333333-3333-4333-8333-333333333333"
+    external_source_id = (
+        "/subscriptions/"
+        f"{other_subscription_id}"
+        "/resourceGroups/rg-external/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-external"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"source.*outside the approved subscription",
+    ):
+        collector_module.normalize_topology_relationships(
+            [
+                {
+                    "relationshipType": "vnet-contains-subnet",
+                    "sourceResourceId": external_source_id,
+                    "sourceResourceType": "microsoft.network/virtualnetworks",
+                    "targetResourceId": (f"{external_source_id}/subnets/snet-app"),
+                    "targetResourceType": ("microsoft.network/virtualnetworks/subnets"),
+                }
+            ],
+            expected_subscription_id=SUBSCRIPTION_ID,
+        )
+
+
+def test_validate_inventory_document_rejects_topology_count_mismatch(
+    collector_module: ModuleType,
+) -> None:
+    """The recorded relationship count must equal the relationship collection."""
+    document = build_valid_inventory_document(collector_module)
+    document["topology"] = {
+        "relationshipCount": 2,
+        "relationships": [
+            build_topology_relationship(),
+        ],
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=r"relationshipCount.*actual relationship count",
+    ):
+        collector_module.validate_inventory_document(
+            document,
+            load_inventory_schema(),
+        )
+
+
+def test_topology_relationship_query_projects_only_controlled_fields(
+    collector_module: ModuleType,
+) -> None:
+    """Every topology query emits only the controlled projection."""
+    required_projection = (
+        "| project relationshiptype, sourceresourceid, "
+        "sourceresourcetype, targetresourceid, targetresourcetype"
+    )
+
+    assert len(collector_module.TOPOLOGY_RELATIONSHIP_QUERIES) == 6
+
+    for relationship_type, query in collector_module.TOPOLOGY_RELATIONSHIP_QUERIES:
+        normalized_query = " ".join(query.split()).casefold()
+
+        assert relationship_type.casefold() in normalized_query
+        assert required_projection in normalized_query
+        assert "tags" not in normalized_query
+        assert "identity" not in normalized_query
+        assert "extendedlocation" not in normalized_query
+        assert "managedby" not in normalized_query
+
+
+def test_topology_relationship_query_covers_supported_resource_types(
+    collector_module: ModuleType,
+) -> None:
+    """The isolated queries cover every supported resource family."""
+    normalized_queries = "\n".join(
+        query for _, query in collector_module.TOPOLOGY_RELATIONSHIP_QUERIES
+    ).casefold()
+
+    required_resource_types = [
+        "microsoft.network/virtualnetworks",
+        "microsoft.network/networksecuritygroups",
+        "microsoft.network/routetables",
+        "microsoft.network/privateendpoints",
+        "microsoft.network/privatednszones/virtualnetworklinks",
+    ]
+
+    for resource_type in required_resource_types:
+        assert resource_type in normalized_queries
+
+
+def test_extract_topology_relationship_records_strips_unexpected_payloads(
+    collector_module: ModuleType,
+) -> None:
+    """Query payloads cannot leak into controlled topology evidence."""
+    vnet_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-hub"
+    )
+    subnet_id = f"{vnet_id}/subnets/snet-app"
+
+    response = {
+        "count": 1,
+        "data": [
+            {
+                "relationshipType": "vnet-contains-subnet",
+                "sourceResourceId": vnet_id,
+                "sourceResourceType": "microsoft.network/virtualnetworks",
+                "targetResourceId": subnet_id,
+                "targetResourceType": ("microsoft.network/virtualnetworks/subnets"),
+                "properties": {
+                    "addressPrefix": "10.20.1.0/24",
+                    "privateEndpointNetworkPolicies": "Disabled",
+                },
+                "tags": {
+                    "owner": "platform",
+                },
+                "identity": {
+                    "principalId": "must-not-be-copied",
+                },
+            }
+        ],
+    }
+
+    relationships = collector_module.extract_topology_relationship_records(
+        response,
+        expected_subscription_id=SUBSCRIPTION_ID,
+    )
+
+    assert relationships == [
+        {
+            "relationshipType": "vnet-contains-subnet",
+            "sourceResourceId": vnet_id.casefold(),
+            "sourceResourceType": "microsoft.network/virtualnetworks",
+            "targetResourceId": subnet_id.casefold(),
+            "targetResourceType": ("microsoft.network/virtualnetworks/subnets"),
+            "targetScope": "in-scope",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {},
+        {"data": None},
+        {"data": {}},
+        {"data": "not-an-array"},
+    ],
+)
+def test_extract_topology_relationship_records_rejects_invalid_data(
+    collector_module: ModuleType,
+    response: dict[str, object],
+) -> None:
+    """Topology query output must contain a data array."""
+    with pytest.raises(
+        ValueError,
+        match=r"topology.*'data' array",
+    ):
+        collector_module.extract_topology_relationship_records(
+            response,
+            expected_subscription_id=SUBSCRIPTION_ID,
+        )
+
+
+def test_collect_inventory_adds_topology_evidence(
+    collector_module: ModuleType,
+) -> None:
+    """Collection combines evidence from six isolated topology queries."""
+    vnet_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-hub"
+    )
+    subnet_id = f"{vnet_id}/subnets/snet-app"
+    observed_commands: list[list[str]] = []
+
+    responses: list[dict[str, object]] = [
+        {
+            "id": SUBSCRIPTION_ID,
+            "name": "Production",
+            "state": "Enabled",
+            "tenantId": TENANT_ID,
+        },
+        {
+            "count": 0,
+            "data": [],
+        },
+        {
+            "count": 1,
+            "data": [
+                {
+                    "relationshipType": "vnet-contains-subnet",
+                    "sourceResourceId": vnet_id,
+                    "sourceResourceType": ("microsoft.network/virtualnetworks"),
+                    "targetResourceId": subnet_id,
+                    "targetResourceType": ("microsoft.network/virtualnetworks/subnets"),
+                    "properties": {
+                        "addressPrefix": "10.20.1.0/24",
+                    },
+                }
+            ],
+        },
+    ]
+    responses.extend(
+        {"count": 0, "data": []}
+        for _ in range(len(collector_module.TOPOLOGY_RELATIONSHIP_QUERIES) - 1)
+    )
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        observed_commands.append(command)
+
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(responses.pop(0)),
+            stderr="",
+        )
+
+    document = collector_module.collect_inventory(
+        subscription_id=SUBSCRIPTION_ID,
+        tenant_id=TENANT_ID,
+        collected_at=datetime(
+            2026,
+            9,
+            15,
+            14,
+            0,
+            tzinfo=timezone.utc,
+        ),
+        runner=fake_runner,
+    )
+
+    expected_commands = [
+        collector_module.build_account_show_command(),
+        collector_module.build_resource_graph_command(
+            SUBSCRIPTION_ID,
+            collector_module.RESOURCE_INVENTORY_QUERY,
+        ),
+    ]
+    expected_commands.extend(
+        collector_module.build_resource_graph_command(
+            SUBSCRIPTION_ID,
+            query,
+        )
+        for _, query in collector_module.TOPOLOGY_RELATIONSHIP_QUERIES
+    )
+
+    assert observed_commands == expected_commands
+    assert responses == []
+    assert document["resourceCount"] == 0
+    assert document["resources"] == []
+    assert document["source"]["query"] == (collector_module.RESOURCE_INVENTORY_QUERY)
+    assert document["source"]["topologyQueries"] == [
+        query for _, query in collector_module.TOPOLOGY_RELATIONSHIP_QUERIES
+    ]
+    assert "topologyQuery" not in document["source"]
+    assert document["topology"] == {
+        "relationshipCount": 1,
+        "relationships": [
+            {
+                "relationshipType": "vnet-contains-subnet",
+                "sourceResourceId": vnet_id.casefold(),
+                "sourceResourceType": ("microsoft.network/virtualnetworks"),
+                "targetResourceId": subnet_id.casefold(),
+                "targetResourceType": ("microsoft.network/virtualnetworks/subnets"),
+                "targetScope": "in-scope",
+            }
+        ],
+    }
+
+    collector_module.validate_inventory_document(
+        document,
+        load_inventory_schema(),
+    )
+
+
+def test_topology_normalization_is_independent_of_input_order(
+    collector_module: ModuleType,
+) -> None:
+    """Equivalent Azure IDs produce identical evidence in every input order."""
+    vnet_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/RG-Network/providers/"
+        "Microsoft.Network/virtualNetworks/VNET-Hub"
+    )
+    subnet_id = f"{vnet_id}/subnets/SNET-App"
+
+    lower_case_record = {
+        "relationshipType": "vnet-contains-subnet",
+        "sourceResourceId": vnet_id.casefold(),
+        "sourceResourceType": "microsoft.network/virtualnetworks",
+        "targetResourceId": subnet_id.casefold(),
+        "targetResourceType": ("microsoft.network/virtualnetworks/subnets"),
+    }
+    mixed_case_record = {
+        "relationshipType": "vnet-contains-subnet",
+        "sourceResourceId": vnet_id,
+        "sourceResourceType": "Microsoft.Network/virtualNetworks",
+        "targetResourceId": subnet_id,
+        "targetResourceType": ("Microsoft.Network/virtualNetworks/subnets"),
+    }
+
+    forward = collector_module.normalize_topology_relationships(
+        [
+            mixed_case_record,
+            lower_case_record,
+        ],
+        expected_subscription_id=SUBSCRIPTION_ID,
+    )
+    reversed_result = collector_module.normalize_topology_relationships(
+        [
+            lower_case_record,
+            mixed_case_record,
+        ],
+        expected_subscription_id=SUBSCRIPTION_ID,
+    )
+
+    assert forward == reversed_result
+    assert forward[0]["sourceResourceId"] == vnet_id.casefold()
+    assert forward[0]["targetResourceId"] == subnet_id.casefold()
+
+
+@pytest.mark.parametrize(
+    (
+        "relationship_type",
+        "source_resource_type",
+        "target_resource_type",
+    ),
+    [
+        (
+            "vnet-contains-subnet",
+            "microsoft.network/privateendpoints",
+            "microsoft.network/virtualnetworks/subnets",
+        ),
+        (
+            "vnet-peered-with-vnet",
+            "microsoft.network/virtualnetworks",
+            "microsoft.network/networksecuritygroups",
+        ),
+        (
+            "subnet-associated-with-nsg",
+            "microsoft.network/virtualnetworks",
+            "microsoft.network/networksecuritygroups",
+        ),
+        (
+            "subnet-associated-with-route-table",
+            "microsoft.network/virtualnetworks/subnets",
+            "microsoft.network/networksecuritygroups",
+        ),
+        (
+            "private-endpoint-placed-in-subnet",
+            "microsoft.network/privateendpoints",
+            "microsoft.network/virtualnetworks",
+        ),
+        (
+            "private-dns-zone-linked-to-vnet",
+            "microsoft.network/privatednszones/virtualnetworklinks",
+            "microsoft.network/virtualnetworks",
+        ),
+    ],
+)
+def test_topology_normalization_rejects_incompatible_endpoint_types(
+    collector_module: ModuleType,
+    relationship_type: str,
+    source_resource_type: str,
+    target_resource_type: str,
+) -> None:
+    """Each relationship type has one controlled source and target contract."""
+    source_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/example/source"
+    )
+    target_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/example/target"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=r"endpoint types.*relationship type",
+    ):
+        collector_module.normalize_topology_relationships(
+            [
+                {
+                    "relationshipType": relationship_type,
+                    "sourceResourceId": source_id,
+                    "sourceResourceType": source_resource_type,
+                    "targetResourceId": target_id,
+                    "targetResourceType": target_resource_type,
+                }
+            ],
+            expected_subscription_id=SUBSCRIPTION_ID,
+        )
+
+
+def test_topology_normalization_ignores_claimed_target_scope(
+    collector_module: ModuleType,
+) -> None:
+    """Resource IDs, not caller-provided scope claims, determine target scope."""
+    other_subscription_id = "33333333-3333-4333-8333-333333333333"
+    source_id = (
+        "/subscriptions/"
+        f"{SUBSCRIPTION_ID}"
+        "/resourceGroups/rg-network/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-hub"
+    )
+    target_id = (
+        "/subscriptions/"
+        f"{other_subscription_id}"
+        "/resourceGroups/rg-external/providers/"
+        "Microsoft.Network/virtualNetworks/vnet-external"
+    )
+
+    relationships = collector_module.normalize_topology_relationships(
+        [
+            {
+                "relationshipType": "vnet-peered-with-vnet",
+                "sourceResourceId": source_id,
+                "sourceResourceType": "microsoft.network/virtualnetworks",
+                "targetResourceId": target_id,
+                "targetResourceType": "microsoft.network/virtualnetworks",
+                "targetScope": "in-scope",
+            }
+        ],
+        expected_subscription_id=SUBSCRIPTION_ID,
+    )
+
+    assert relationships[0]["targetScope"] == "external-subscription"
+
+
+def test_topology_queries_are_independent(
+    collector_module: ModuleType,
+) -> None:
+    """Each supported relationship uses an isolated Resource Graph query."""
+    expected_relationship_types = (
+        "vnet-contains-subnet",
+        "vnet-peered-with-vnet",
+        "subnet-associated-with-nsg",
+        "subnet-associated-with-route-table",
+        "private-endpoint-placed-in-subnet",
+        "private-dns-zone-linked-to-vnet",
+    )
+
+    queries = collector_module.TOPOLOGY_RELATIONSHIP_QUERIES
+
+    assert isinstance(queries, tuple)
+    assert len(queries) == len(expected_relationship_types)
+    assert (
+        tuple(relationship_type for relationship_type, _ in queries) == expected_relationship_types
+    )
+
+    for relationship_type, query in queries:
+        assert relationship_type in query
+        assert query.strip()
+        assert not query.lstrip().casefold().startswith("union")
+        assert "| project relationshipType" in query
+
+
+def test_resource_graph_command_supports_pagination(
+    collector_module: ModuleType,
+) -> None:
+    """Resource Graph commands must use bounded pages and continuation tokens."""
+    query = "Resources | project id"
+
+    first_page_command = collector_module.build_resource_graph_command(
+        SUBSCRIPTION_ID,
+        query,
+        page_size=1000,
+    )
+    next_page_command = collector_module.build_resource_graph_command(
+        SUBSCRIPTION_ID,
+        query,
+        page_size=1000,
+        skip_token="opaque-continuation-token",
+    )
+
+    assert first_page_command == [
+        "az",
+        "graph",
+        "query",
+        "--subscriptions",
+        SUBSCRIPTION_ID,
+        "--graph-query",
+        query,
+        "--first",
+        "1000",
+        "--output",
+        "json",
+        "--only-show-errors",
+    ]
+    assert next_page_command == [
+        "az",
+        "graph",
+        "query",
+        "--subscriptions",
+        SUBSCRIPTION_ID,
+        "--graph-query",
+        query,
+        "--first",
+        "1000",
+        "--skip-token",
+        "opaque-continuation-token",
+        "--output",
+        "json",
+        "--only-show-errors",
+    ]
+
+
+def test_resource_graph_pages_are_collected_completely(
+    collector_module: ModuleType,
+) -> None:
+    """Every Resource Graph page is collected exactly once."""
+    query = "Resources | project id"
+    responses = [
+        {
+            "count": 2,
+            "data": [
+                {"id": "/subscriptions/example/resourceGroups/rg-a"},
+                {"id": "/subscriptions/example/resourceGroups/rg-b"},
+            ],
+            "skipToken": "page-2-token",
+            "totalRecords": 3,
+        },
+        {
+            "count": 1,
+            "data": [
+                {"id": "/subscriptions/example/resourceGroups/rg-c"},
+            ],
+            "skipToken": None,
+            "totalRecords": 3,
+        },
+    ]
+    observed_commands: list[list[str]] = []
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        observed_commands.append(command)
+
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(responses.pop(0)),
+            stderr="",
+        )
+
+    records = collector_module.execute_paged_resource_graph_query(
+        SUBSCRIPTION_ID,
+        query,
+        page_size=1000,
+        runner=fake_runner,
+    )
+
+    assert records == [
+        {"id": "/subscriptions/example/resourceGroups/rg-a"},
+        {"id": "/subscriptions/example/resourceGroups/rg-b"},
+        {"id": "/subscriptions/example/resourceGroups/rg-c"},
+    ]
+    assert observed_commands == [
+        collector_module.build_resource_graph_command(
+            SUBSCRIPTION_ID,
+            query,
+            page_size=1000,
+        ),
+        collector_module.build_resource_graph_command(
+            SUBSCRIPTION_ID,
+            query,
+            page_size=1000,
+            skip_token="page-2-token",
+        ),
+    ]
+    assert responses == []
+
+
+def test_resource_graph_pagination_rejects_inconsistent_total_records(
+    collector_module: ModuleType,
+) -> None:
+    """Total-record metadata must remain stable across pages."""
+    responses = [
+        {
+            "count": 2,
+            "data": [
+                {"id": "resource-a"},
+                {"id": "resource-b"},
+            ],
+            "skipToken": "page-2",
+            "totalRecords": 3,
+        },
+        {
+            "count": 1,
+            "data": [
+                {"id": "resource-c"},
+            ],
+            "skipToken": None,
+            "totalRecords": 4,
+        },
+    ]
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(responses.pop(0)),
+            stderr="",
+        )
+
+    with pytest.raises(
+        RuntimeError,
+        match="total record count changed",
+    ):
+        collector_module.execute_paged_resource_graph_query(
+            SUBSCRIPTION_ID,
+            "Resources | project id",
+            runner=fake_runner,
+        )
+
+    assert responses == []
+
+
+def test_resource_graph_pagination_rejects_truncated_terminal_page(
+    collector_module: ModuleType,
+) -> None:
+    """Missing continuation metadata must not silently truncate evidence."""
+    responses = [
+        {
+            "count": 2,
+            "data": [
+                {"id": "resource-a"},
+                {"id": "resource-b"},
+            ],
+            "skipToken": None,
+            "totalRecords": 3,
+        }
+    ]
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(responses.pop(0)),
+            stderr="",
+        )
+
+    with pytest.raises(
+        RuntimeError,
+        match="returned 2 of 3 records",
+    ):
+        collector_module.execute_paged_resource_graph_query(
+            SUBSCRIPTION_ID,
+            "Resources | project id",
+            runner=fake_runner,
+        )
+
+    assert responses == []
+
+
+def test_resource_graph_pagination_rejects_repeated_skip_token(
+    collector_module: ModuleType,
+) -> None:
+    """A repeated continuation token must stop a pagination loop."""
+    responses = [
+        {
+            "count": 1,
+            "data": [{"id": "resource-a"}],
+            "skipToken": "repeated-token",
+            "totalRecords": 3,
+        },
+        {
+            "count": 1,
+            "data": [{"id": "resource-b"}],
+            "skipToken": "repeated-token",
+            "totalRecords": 3,
+        },
+    ]
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(responses.pop(0)),
+            stderr="",
+        )
+
+    with pytest.raises(
+        RuntimeError,
+        match="repeated a pagination skip token",
+    ):
+        collector_module.execute_paged_resource_graph_query(
+            SUBSCRIPTION_ID,
+            "Resources | project id",
+            runner=fake_runner,
+        )
+
+    assert responses == []
+
+
+def test_resource_graph_command_normalizes_multiline_kql_for_windows(
+    collector_module: ModuleType,
+) -> None:
+    """Multiline KQL must survive execution through the Windows az.cmd wrapper."""
+    multiline_query = """Resources
+| where false
+| project id"""
+
+    command = collector_module.build_resource_graph_command(
+        SUBSCRIPTION_ID,
+        multiline_query,
+    )
+
+    query_index = command.index("--graph-query") + 1
+    command_query = command[query_index]
+
+    assert command_query == "Resources | where false | project id"
+    assert "\n" not in command_query
+    assert "\r" not in command_query
+
+
+def test_run_does_not_publish_partial_inventory_after_query_failure(
+    collector_module: ModuleType,
+    tmp_path: Path,
+) -> None:
+    """A failed topology query must not publish partial inventory evidence."""
+    project_root = tmp_path / "project"
+    (project_root / ".specify").mkdir(parents=True)
+    output_path = (project_root / ".specify" / "discovery" / "azure-inventory.json").resolve()
+
+    responses = [
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "id": SUBSCRIPTION_ID,
+                    "name": "Production",
+                    "state": "Enabled",
+                    "tenantId": TENANT_ID,
+                }
+            ),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "data": [],
+                    "totalRecords": 0,
+                }
+            ),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "data": [],
+                    "totalRecords": 0,
+                }
+            ),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=1,
+            stdout="",
+            stderr="simulated topology failure",
+        ),
+    ]
+    observed_commands: list[list[str]] = []
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        observed_commands.append(command)
+
+        if not responses:
+            raise AssertionError("Collection continued after the failing topology query.")
+
+        return responses.pop(0)
+
+    with pytest.raises(
+        RuntimeError,
+        match="simulated topology failure",
+    ):
+        collector_module.run(
+            [
+                "--subscription",
+                SUBSCRIPTION_ID,
+                "--tenant",
+                TENANT_ID,
+                "--approve-read-only",
+            ],
+            project_root=project_root,
+            collected_at=datetime(
+                2026,
+                9,
+                15,
+                17,
+                30,
+                tzinfo=timezone.utc,
+            ),
+            runner=fake_runner,
+        )
+
+    assert len(observed_commands) == 4
+    assert responses == []
+    assert not output_path.exists()
+
+    discovery_directory = output_path.parent
+
+    if discovery_directory.exists():
+        assert list(discovery_directory.glob(f".{output_path.name}.*.tmp")) == []
+
+
+def test_run_preserves_existing_inventory_after_query_failure(
+    collector_module: ModuleType,
+    tmp_path: Path,
+) -> None:
+    """A failed overwrite attempt must preserve existing evidence exactly."""
+    project_root = tmp_path / "project"
+    discovery_directory = project_root / ".specify" / "discovery"
+    discovery_directory.mkdir(parents=True)
+
+    output_path = (discovery_directory / "azure-inventory.json").resolve()
+    original_content = b'{"existing":true}\n'
+    output_path.write_bytes(original_content)
+
+    responses = [
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "id": SUBSCRIPTION_ID,
+                    "name": "Production",
+                    "state": "Enabled",
+                    "tenantId": TENANT_ID,
+                }
+            ),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "data": [],
+                    "totalRecords": 0,
+                }
+            ),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "data": [],
+                    "totalRecords": 0,
+                }
+            ),
+            stderr="",
+        ),
+        SimpleNamespace(
+            returncode=1,
+            stdout="",
+            stderr="simulated topology failure",
+        ),
+    ]
+    observed_commands: list[list[str]] = []
+
+    def fake_runner(
+        command: list[str],
+        **kwargs: object,
+    ) -> SimpleNamespace:
+        observed_commands.append(command)
+
+        if not responses:
+            raise AssertionError("Collection continued after the failing topology query.")
+
+        return responses.pop(0)
+
+    with pytest.raises(
+        RuntimeError,
+        match="simulated topology failure",
+    ):
+        collector_module.run(
+            [
+                "--subscription",
+                SUBSCRIPTION_ID,
+                "--tenant",
+                TENANT_ID,
+                "--approve-read-only",
+                "--overwrite",
+            ],
+            project_root=project_root,
+            collected_at=datetime(
+                2026,
+                9,
+                15,
+                17,
+                30,
+                tzinfo=timezone.utc,
+            ),
+            runner=fake_runner,
+        )
+
+    assert len(observed_commands) == 4
+    assert responses == []
+    assert output_path.read_bytes() == original_content
+    assert list(discovery_directory.glob(f".{output_path.name}.*.tmp")) == []

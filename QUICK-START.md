@@ -245,6 +245,7 @@ specify init --here --integration codex --script ps
 
 ```powershell
 specify init --here --integration copilot --script ps
+```
 
 ### Another Integration
 
@@ -269,7 +270,7 @@ Install the immutable `v0.7.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is not yet
@@ -841,7 +842,7 @@ Correct:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 ```
 
 The `--from` value must point to a ZIP, tar.gz, or tgz archive.
@@ -940,6 +941,7 @@ To replace an existing set after explicit approval, run:
 
 See [Azure Intended Design](docs/AZURE-DESIGN.md) for the complete workflow and
 security boundaries.
+
 ## Record the Intended Design Decision
 
 After inspecting the intended-design model, Markdown overview, SVG, and
@@ -1020,3 +1022,20 @@ See
 [Azure Intended Design Review](docs/AZURE-DESIGN-REVIEW.md)
 for the complete decision, digest, overwrite, transactional publication, and
 troubleshooting guidance.
+
+## Review Brownfield Topology Evidence
+
+After optional inventory collection, open
+`.specify/discovery/azure-inventory.json` and review the `topology` object.
+
+Confirm that:
+
+- `relationshipCount` matches the number of relationship records;
+- every relationship has the expected `relationshipType`;
+- `sourceResourceId` and `targetResourceId` identify the intended endpoints;
+- `targetScope` is `in-scope`, `external-subscription`, or `unresolved`;
+- external or unresolved targets are investigated before reuse decisions;
+- all findings remain `unconfirmed` until reconciled during the interview.
+
+Topology evidence describes observed Azure references. It does not grant
+permission to reuse, modify, move, replace, or delete any resource.

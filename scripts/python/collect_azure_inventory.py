@@ -22,6 +22,159 @@ Resources
 | project id, name, type, location, resourceGroup, subscriptionId, kind, managedBy
 | order by type asc, name asc
 """.strip()
+
+TOPOLOGY_RELATIONSHIP_TYPES = (
+    "vnet-contains-subnet",
+    "vnet-peered-with-vnet",
+    "subnet-associated-with-nsg",
+    "subnet-associated-with-route-table",
+    "private-endpoint-placed-in-subnet",
+    "private-dns-zone-linked-to-vnet",
+)
+
+TOPOLOGY_ENDPOINT_TYPES = {
+    "vnet-contains-subnet": (
+        "microsoft.network/virtualnetworks",
+        "microsoft.network/virtualnetworks/subnets",
+    ),
+    "vnet-peered-with-vnet": (
+        "microsoft.network/virtualnetworks",
+        "microsoft.network/virtualnetworks",
+    ),
+    "subnet-associated-with-nsg": (
+        "microsoft.network/virtualnetworks/subnets",
+        "microsoft.network/networksecuritygroups",
+    ),
+    "subnet-associated-with-route-table": (
+        "microsoft.network/virtualnetworks/subnets",
+        "microsoft.network/routetables",
+    ),
+    "private-endpoint-placed-in-subnet": (
+        "microsoft.network/privateendpoints",
+        "microsoft.network/virtualnetworks/subnets",
+    ),
+    "private-dns-zone-linked-to-vnet": (
+        "microsoft.network/privatednszones",
+        "microsoft.network/virtualnetworks",
+    ),
+}
+
+TOPOLOGY_RELATIONSHIP_QUERIES = (
+    (
+        "vnet-contains-subnet",
+        """
+Resources
+    | where type =~ 'microsoft.network/virtualnetworks'
+    | mv-expand subnet = properties.subnets
+    | extend relationshipType = 'vnet-contains-subnet'
+    | extend sourceResourceId = tostring(id)
+    | extend sourceResourceType = 'microsoft.network/virtualnetworks'
+    | extend targetResourceId = tostring(subnet.id)
+    | extend targetResourceType = 'microsoft.network/virtualnetworks/subnets'
+    | where isnotempty(targetResourceId)
+| project relationshipType, sourceResourceId, sourceResourceType,
+    targetResourceId, targetResourceType
+| order by relationshipType asc, sourceResourceId asc,
+    targetResourceId asc
+""".strip(),
+    ),
+    (
+        "vnet-peered-with-vnet",
+        """
+Resources
+    | where type =~ 'microsoft.network/virtualnetworks'
+    | mv-expand peering = properties.virtualNetworkPeerings
+    | extend relationshipType = 'vnet-peered-with-vnet'
+    | extend sourceResourceId = tostring(id)
+    | extend sourceResourceType = 'microsoft.network/virtualnetworks'
+    | extend targetResourceId = tostring(
+        peering.properties.remoteVirtualNetwork.id
+      )
+    | extend targetResourceType = 'microsoft.network/virtualnetworks'
+| project relationshipType, sourceResourceId, sourceResourceType,
+    targetResourceId, targetResourceType
+| order by relationshipType asc, sourceResourceId asc,
+    targetResourceId asc
+""".strip(),
+    ),
+    (
+        "subnet-associated-with-nsg",
+        """
+Resources
+    | where type =~ 'microsoft.network/virtualnetworks'
+    | mv-expand subnet = properties.subnets
+    | extend relationshipType = 'subnet-associated-with-nsg'
+    | extend sourceResourceId = tostring(subnet.id)
+    | extend sourceResourceType = 'microsoft.network/virtualnetworks/subnets'
+    | extend targetResourceId = tostring(
+        subnet.properties.networkSecurityGroup.id
+      )
+    | extend targetResourceType = 'microsoft.network/networksecuritygroups'
+    | where isnotempty(targetResourceId)
+| project relationshipType, sourceResourceId, sourceResourceType,
+    targetResourceId, targetResourceType
+| order by relationshipType asc, sourceResourceId asc,
+    targetResourceId asc
+""".strip(),
+    ),
+    (
+        "subnet-associated-with-route-table",
+        """
+Resources
+    | where type =~ 'microsoft.network/virtualnetworks'
+    | mv-expand subnet = properties.subnets
+    | extend relationshipType = 'subnet-associated-with-route-table'
+    | extend sourceResourceId = tostring(subnet.id)
+    | extend sourceResourceType = 'microsoft.network/virtualnetworks/subnets'
+    | extend targetResourceId = tostring(
+        subnet.properties.routeTable.id
+      )
+    | extend targetResourceType = 'microsoft.network/routetables'
+    | where isnotempty(targetResourceId)
+| project relationshipType, sourceResourceId, sourceResourceType,
+    targetResourceId, targetResourceType
+| order by relationshipType asc, sourceResourceId asc,
+    targetResourceId asc
+""".strip(),
+    ),
+    (
+        "private-endpoint-placed-in-subnet",
+        """
+Resources
+    | where type =~ 'microsoft.network/privateendpoints'
+    | extend relationshipType = 'private-endpoint-placed-in-subnet'
+    | extend sourceResourceId = tostring(id)
+    | extend sourceResourceType = 'microsoft.network/privateendpoints'
+    | extend targetResourceId = tostring(properties.subnet.id)
+    | extend targetResourceType = 'microsoft.network/virtualnetworks/subnets'
+| project relationshipType, sourceResourceId, sourceResourceType,
+    targetResourceId, targetResourceType
+| order by relationshipType asc, sourceResourceId asc,
+    targetResourceId asc
+""".strip(),
+    ),
+    (
+        "private-dns-zone-linked-to-vnet",
+        """
+Resources
+    | where type =~
+        'microsoft.network/privatednszones/virtualnetworklinks'
+    | extend relationshipType = 'private-dns-zone-linked-to-vnet'
+    | extend sourceResourceId = substring(
+        id,
+        0,
+        indexof(id, '/virtualNetworkLinks/')
+      )
+    | extend sourceResourceType = 'microsoft.network/privatednszones'
+    | extend targetResourceId = tostring(properties.virtualNetwork.id)
+    | extend targetResourceType = 'microsoft.network/virtualnetworks'
+| project relationshipType, sourceResourceId, sourceResourceType,
+    targetResourceId, targetResourceType
+| order by relationshipType asc, sourceResourceId asc,
+    targetResourceId asc
+""".strip(),
+    ),
+)
 EXIT_SUCCESS = 0
 EXIT_EXECUTION_ERROR = 2
 
@@ -277,11 +430,267 @@ def extract_resource_records(
     return records
 
 
+def extract_subscription_id_from_resource_id(
+    resource_id: str,
+) -> str | None:
+    """Return a canonical subscription ID from an Azure resource ID."""
+    if not isinstance(resource_id, str):
+        return None
+
+    segments = resource_id.strip().split("/")
+
+    if len(segments) < 3 or segments[0] != "" or segments[1].casefold() != "subscriptions":
+        return None
+
+    try:
+        return validate_azure_identifier(segments[2])
+    except ValueError:
+        return None
+
+
+def extract_topology_relationship_records(
+    response: dict[str, Any],
+    *,
+    expected_subscription_id: str,
+) -> list[dict[str, Any]]:
+    """Extract only controlled topology fields from Resource Graph output."""
+    data = response.get("data")
+
+    if not isinstance(data, list):
+        raise ValueError("Azure topology Resource Graph response must contain a 'data' array.")
+
+    return normalize_topology_relationships(
+        data,
+        expected_subscription_id=expected_subscription_id,
+    )
+
+
+def normalize_topology_relationships(
+    records: list[dict[str, Any]],
+    *,
+    expected_subscription_id: str,
+) -> list[dict[str, Any]]:
+    """Validate, classify, deduplicate, and sort topology relationships."""
+    if not isinstance(records, list):
+        raise ValueError("Topology relationship records must be an array.")
+
+    approved_subscription_id = validate_azure_identifier(expected_subscription_id)
+    required_properties = (
+        "relationshipType",
+        "sourceResourceId",
+        "sourceResourceType",
+        "targetResourceId",
+        "targetResourceType",
+    )
+    normalized_by_identity: dict[
+        tuple[str, str, str, str, str],
+        dict[str, Any],
+    ] = {}
+
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            raise ValueError(f"Topology relationship at index {index} must be an object.")
+
+        for property_name in required_properties:
+            if property_name not in record:
+                raise ValueError(
+                    f"Topology relationship at index {index} is missing "
+                    f"required property '{property_name}'."
+                )
+
+        relationship_type = record["relationshipType"]
+
+        if relationship_type not in TOPOLOGY_RELATIONSHIP_TYPES:
+            raise ValueError(f"Unsupported topology relationship type: {relationship_type!r}.")
+
+        source_resource_id = record["sourceResourceId"]
+        source_resource_type = record["sourceResourceType"]
+        target_resource_id = record["targetResourceId"]
+        target_resource_type = record["targetResourceType"]
+
+        if not isinstance(source_resource_id, str) or not source_resource_id:
+            raise ValueError(
+                f"Topology relationship at index {index} has an invalid sourceResourceId."
+            )
+
+        if not isinstance(source_resource_type, str) or not source_resource_type:
+            raise ValueError(
+                f"Topology relationship at index {index} has an invalid sourceResourceType."
+            )
+
+        if not isinstance(target_resource_type, str) or not target_resource_type:
+            raise ValueError(
+                f"Topology relationship at index {index} has an invalid targetResourceType."
+            )
+
+        if target_resource_id is not None and (
+            not isinstance(target_resource_id, str) or not target_resource_id
+        ):
+            raise ValueError(
+                f"Topology relationship at index {index} has an invalid targetResourceId."
+            )
+
+        source_subscription_id = extract_subscription_id_from_resource_id(source_resource_id)
+
+        if source_subscription_id != approved_subscription_id:
+            raise ValueError("Topology relationship source is outside the approved subscription.")
+
+        if target_resource_id is None:
+            target_scope = "unresolved"
+        else:
+            target_subscription_id = extract_subscription_id_from_resource_id(target_resource_id)
+
+            if target_subscription_id is None:
+                target_scope = "unresolved"
+            elif target_subscription_id == approved_subscription_id:
+                target_scope = "in-scope"
+            else:
+                target_scope = "external-subscription"
+
+        normalized_source_resource_type = source_resource_type.casefold()
+        normalized_target_resource_type = target_resource_type.casefold()
+        expected_source_type, expected_target_type = TOPOLOGY_ENDPOINT_TYPES[relationship_type]
+
+        if (
+            normalized_source_resource_type != expected_source_type
+            or normalized_target_resource_type != expected_target_type
+        ):
+            raise ValueError(
+                "Topology endpoint types do not match relationship type "
+                f"{relationship_type!r}: expected "
+                f"{expected_source_type!r} -> {expected_target_type!r}."
+            )
+
+        normalized_source_resource_id = source_resource_id.casefold()
+        normalized_target_resource_id = (
+            target_resource_id.casefold() if target_resource_id is not None else None
+        )
+
+        normalized_relationship = {
+            "relationshipType": relationship_type,
+            "sourceResourceId": normalized_source_resource_id,
+            "sourceResourceType": normalized_source_resource_type,
+            "targetResourceId": normalized_target_resource_id,
+            "targetResourceType": normalized_target_resource_type,
+            "targetScope": target_scope,
+        }
+
+        identity = (
+            relationship_type.casefold(),
+            source_resource_id.casefold(),
+            source_resource_type.casefold(),
+            (target_resource_id.casefold() if target_resource_id is not None else ""),
+            target_resource_type.casefold(),
+        )
+
+        normalized_by_identity.setdefault(
+            identity,
+            normalized_relationship,
+        )
+
+    return sorted(
+        normalized_by_identity.values(),
+        key=lambda relationship: (
+            relationship["relationshipType"].casefold(),
+            relationship["sourceResourceId"].casefold(),
+            relationship["targetScope"],
+            (
+                relationship["targetResourceId"].casefold()
+                if relationship["targetResourceId"] is not None
+                else ""
+            ),
+            relationship["targetResourceType"].casefold(),
+        ),
+    )
+
+
+def execute_paged_resource_graph_query(
+    subscription_id: str,
+    graph_query: str,
+    *,
+    page_size: int = 1000,
+    runner: Any = subprocess.run,
+) -> list[dict[str, Any]]:
+    """Collect every Resource Graph page without silently truncating evidence."""
+    records: list[dict[str, Any]] = []
+    skip_token: str | None = None
+    observed_skip_tokens: set[str] = set()
+    expected_total_records: int | None = None
+
+    while True:
+        response = execute_json_command(
+            build_resource_graph_command(
+                subscription_id,
+                graph_query,
+                page_size=page_size,
+                skip_token=skip_token,
+            ),
+            runner=runner,
+        )
+
+        page_data = response.get("data")
+
+        if not isinstance(page_data, list):
+            raise RuntimeError("Azure Resource Graph response did not contain a data array.")
+
+        for record in page_data:
+            if not isinstance(record, dict):
+                raise RuntimeError("Azure Resource Graph data contained a non-object record.")
+
+            records.append(record)
+
+        reported_total_records = response.get("totalRecords")
+
+        if reported_total_records is None:
+            reported_total_records = response.get("total_records")
+
+        if reported_total_records is not None:
+            if (
+                isinstance(reported_total_records, bool)
+                or not isinstance(reported_total_records, int)
+                or reported_total_records < 0
+            ):
+                raise RuntimeError("Azure Resource Graph returned an invalid total record count.")
+
+            if expected_total_records is None:
+                expected_total_records = reported_total_records
+            elif reported_total_records != expected_total_records:
+                raise RuntimeError("Azure Resource Graph total record count changed between pages.")
+
+        next_skip_token = response.get("skipToken")
+
+        if next_skip_token is None:
+            next_skip_token = response.get("$skipToken")
+
+        if next_skip_token is None:
+            next_skip_token = response.get("skip_token")
+
+        if next_skip_token is None:
+            break
+
+        if not isinstance(next_skip_token, str) or not next_skip_token.strip():
+            raise RuntimeError("Azure Resource Graph returned an invalid skip token.")
+
+        if next_skip_token in observed_skip_tokens:
+            raise RuntimeError("Azure Resource Graph repeated a pagination skip token.")
+
+        observed_skip_tokens.add(next_skip_token)
+        skip_token = next_skip_token
+
+    if expected_total_records is not None and len(records) != expected_total_records:
+        raise RuntimeError(
+            f"Azure Resource Graph returned {len(records)} of {expected_total_records} records."
+        )
+
+    return records
+
+
 def build_inventory_document(
     account: dict[str, str],
     resources: list[dict[str, Any]],
     *,
     collected_at: datetime,
+    topology_relationships: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build an unconfirmed, read-only Azure inventory evidence document."""
     if collected_at.tzinfo is None or collected_at.utcoffset() is None:
@@ -293,7 +702,7 @@ def build_inventory_document(
     copied_account = deepcopy(account)
     copied_resources = deepcopy(resources)
 
-    return {
+    document = {
         "schemaVersion": "1.0",
         "evidenceStatus": "unconfirmed",
         "collectedAt": collected_at_value,
@@ -307,6 +716,18 @@ def build_inventory_document(
         "resourceCount": len(copied_resources),
         "resources": copied_resources,
     }
+
+    if topology_relationships is not None:
+        copied_relationships = deepcopy(topology_relationships)
+        document["source"]["topologyQueries"] = [
+            query for _, query in TOPOLOGY_RELATIONSHIP_QUERIES
+        ]
+        document["topology"] = {
+            "relationshipCount": len(copied_relationships),
+            "relationships": copied_relationships,
+        }
+
+    return document
 
 
 def validate_inventory_document(
@@ -336,6 +757,20 @@ def validate_inventory_document(
             f"{recorded_resource_count}, actual "
             f"{actual_resource_count}."
         )
+
+    topology = document.get("topology")
+
+    if topology is not None:
+        recorded_relationship_count = topology["relationshipCount"]
+        actual_relationship_count = len(topology["relationships"])
+
+        if recorded_relationship_count != actual_relationship_count:
+            raise ValueError(
+                "Inventory topology relationshipCount does not match the "
+                f"actual relationship count: recorded "
+                f"{recorded_relationship_count}, actual "
+                f"{actual_relationship_count}."
+            )
 
 
 def write_inventory_document(
@@ -415,15 +850,29 @@ def collect_inventory(
         expected_tenant_id=approved_tenant_id,
     )
 
-    graph_response = execute_json_command(
-        build_resource_graph_command(
-            approved_subscription_id,
-            RESOURCE_INVENTORY_QUERY,
-        ),
+    resource_records = execute_paged_resource_graph_query(
+        approved_subscription_id,
+        RESOURCE_INVENTORY_QUERY,
         runner=runner,
     )
     resources = extract_resource_records(
-        graph_response,
+        {"data": resource_records},
+        expected_subscription_id=approved_subscription_id,
+    )
+
+    topology_records: list[dict[str, Any]] = []
+
+    for _, topology_query in TOPOLOGY_RELATIONSHIP_QUERIES:
+        topology_records.extend(
+            execute_paged_resource_graph_query(
+                approved_subscription_id,
+                topology_query,
+                runner=runner,
+            )
+        )
+
+    topology_relationships = extract_topology_relationship_records(
+        {"data": topology_records},
         expected_subscription_id=approved_subscription_id,
     )
 
@@ -433,6 +882,7 @@ def collect_inventory(
         account,
         resources,
         collected_at=collection_time,
+        topology_relationships=topology_relationships,
     )
 
 
@@ -542,25 +992,63 @@ def build_account_show_command() -> list[str]:
 def build_resource_graph_command(
     subscription_id: str,
     graph_query: str,
+    *,
+    page_size: int = 1000,
+    skip_token: str | None = None,
 ) -> list[str]:
-    """Build a subscription-scoped, read-only Azure Resource Graph command."""
+    """Build one bounded, subscription-scoped Resource Graph page request."""
     normalized_subscription_id = validate_azure_identifier(subscription_id)
 
     if not graph_query.strip():
         raise ValueError("Resource Graph query must not be empty.")
 
-    return [
+    if (
+        isinstance(page_size, bool)
+        or not isinstance(page_size, int)
+        or page_size < 1
+        or page_size > 1000
+    ):
+        raise ValueError("Resource Graph page size must be between 1 and 1000.")
+
+    if skip_token is not None and not skip_token.strip():
+        raise ValueError("Resource Graph skip token must not be empty.")
+
+    normalized_graph_query = " ".join(
+        line.strip() for line in graph_query.splitlines() if line.strip()
+    )
+
+    if not normalized_graph_query:
+        raise ValueError("Resource Graph query must not be empty.")
+
+    command = [
         "az",
         "graph",
         "query",
         "--subscriptions",
         normalized_subscription_id,
         "--graph-query",
-        graph_query,
-        "--output",
-        "json",
-        "--only-show-errors",
+        normalized_graph_query,
+        "--first",
+        str(page_size),
     ]
+
+    if skip_token is not None:
+        command.extend(
+            [
+                "--skip-token",
+                skip_token,
+            ]
+        )
+
+    command.extend(
+        [
+            "--output",
+            "json",
+            "--only-show-errors",
+        ]
+    )
+
+    return command
 
 
 if __name__ == "__main__":

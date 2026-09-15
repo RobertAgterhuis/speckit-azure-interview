@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -356,7 +357,7 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.7.0.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.8.0.zip" in quick_start_content
     )
 
 
@@ -1145,3 +1146,129 @@ def test_quick_start_and_site_explain_adaptive_batch_answers() -> None:
 
     assert "End every response with exactly one next question" not in site_interview
     assert "Ask exactly one primary question per response" not in site_interview
+
+
+def test_release_documentation_describes_brownfield_topology_discovery() -> None:
+    """Public guidance must explain topology evidence and its safety boundaries."""
+    documentation_requirements = {
+        "README.md": [
+            "Brownfield Topology Discovery",
+            "six controlled relationship types",
+            "external subscriptions are referenced but never queried",
+        ],
+        "QUICK-START.md": [
+            "Review Brownfield Topology Evidence",
+            "relationshipCount",
+            "targetScope",
+            "unconfirmed",
+        ],
+        "docs/AZURE-INVENTORY.md": [
+            "Brownfield topology relationships",
+            "vnet-contains-subnet",
+            "vnet-peered-with-vnet",
+            "subnet-associated-with-nsg",
+            "subnet-associated-with-route-table",
+            "private-endpoint-placed-in-subnet",
+            "private-dns-zone-linked-to-vnet",
+            "in-scope",
+            "external-subscription",
+            "unresolved",
+            "topologyQueries",
+        ],
+        "commands/azure-inventory.md": [
+            "Topology Evidence",
+            "Report the topology relationship count",
+            "external-subscription",
+            "never query a referenced external subscription",
+        ],
+        "site-docs/content/docs/artifacts/inventory-evidence.md": [
+            "## Topology evidence",
+            "relationshipType",
+            "sourceResourceId",
+            "targetResourceId",
+            "targetScope",
+            "topologyQueries",
+        ],
+        "site-docs/content/docs/commands/inventory.md": [
+            "Topology Evidence",
+            "Report the topology relationship count",
+            "external-subscription",
+            "never query a referenced external subscription",
+        ],
+        "docs/TESTING.md": [
+            "Windows-safe single-line KQL arguments",
+            "seven separate Resource Graph query flows",
+            "pagination integrity",
+            "partial inventory evidence",
+        ],
+    }
+
+    for relative_path, required_statements in documentation_requirements.items():
+        content = (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
+        normalized_content = " ".join(content.split()).casefold()
+
+        for statement in required_statements:
+            normalized_statement = " ".join(statement.split()).casefold()
+
+            assert normalized_statement in normalized_content, (
+                f"{relative_path} is missing: {statement}"
+            )
+
+
+def test_brownfield_topology_release_is_version_0_8_0(
+    manifest: dict[str, Any],
+) -> None:
+    """Brownfield topology discovery must ship as the v0.8.0 minor release."""
+    expected_version = "0.8.0"
+    expected_tag = "v0.8.0"
+
+    assert manifest["extension"]["version"] == expected_version
+
+    package = json.loads((REPOSITORY_ROOT / "package.json").read_text(encoding="utf-8"))
+    package_lock = json.loads((REPOSITORY_ROOT / "package-lock.json").read_text(encoding="utf-8"))
+
+    assert package["version"] == expected_version
+    assert package_lock["version"] == expected_version
+    assert package_lock["packages"][""]["version"] == expected_version
+
+    release_facing_files = [
+        "README.md",
+        "QUICK-START.md",
+        "docs/CODEX.md",
+        "docs/COPILOT.md",
+        "docs/TESTING.md",
+        "site-docs/content/docs/getting-started.md",
+    ]
+
+    for relative_path in release_facing_files:
+        content = (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
+        assert expected_tag in content, f"{relative_path} does not reference {expected_tag}"
+
+    changelog = (REPOSITORY_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+
+    required_changelog_statements = [
+        "## [0.8.0] - 2026-09-15",
+        "Brownfield topology discovery",
+        "six controlled topology relationship types",
+        "Windows-safe KQL normalization",
+        "seven separate Resource Graph query flows",
+        "pagination integrity",
+        "external subscriptions are referenced but never queried",
+        (
+            "[Unreleased]: "
+            "https://github.com/RobertAgterhuis/"
+            "speckit-azure-interview/compare/v0.8.0...HEAD"
+        ),
+        (
+            "[0.8.0]: "
+            "https://github.com/RobertAgterhuis/"
+            "speckit-azure-interview/compare/v0.7.0...v0.8.0"
+        ),
+    ]
+
+    normalized_changelog = " ".join(changelog.split()).casefold()
+
+    for statement in required_changelog_statements:
+        normalized_statement = " ".join(statement.split()).casefold()
+
+        assert normalized_statement in normalized_changelog, f"CHANGELOG.md is missing: {statement}"

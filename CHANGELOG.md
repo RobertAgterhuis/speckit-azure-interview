@@ -17,6 +17,46 @@ and this project adheres to
 - Azure DevOps pipeline requirement validation.
 - Additional integration tests for supported AI platforms.
 
+## [0.8.0] - 2026-09-15
+
+### Added
+
+- Brownfield topology discovery with six controlled topology relationship types:
+  virtual-network subnet containment, virtual-network peering, subnet network
+  security group and route-table associations, private-endpoint subnet
+  placement, and Private DNS zone virtual-network links.
+- Optional schema-validated `topology` evidence with deterministic relationship
+  ordering, deduplication, endpoint types, counts, and target-scope
+  classification.
+- `in-scope`, `external-subscription`, and `unresolved` target classifications.
+- Six-query provenance through `source.topologyQueries`.
+- Pagination integrity checks for stable total-record counts, complete result
+  collection, and non-repeating continuation tokens.
+- Public operator, command, testing, Quick Start, and Starlight documentation
+  for topology evidence and its limitations.
+
+### Changed
+
+- Azure inventory collection now uses seven separate Resource Graph query flows:
+  one resource query and six controlled topology queries.
+- Windows-safe KQL normalization converts controlled multiline queries into one
+  command-line argument before execution through `az.cmd`.
+- Inventory collection validates all query results before atomic artifact
+  publication.
+- Active immutable installation examples and package metadata now reference
+  v0.8.0.
+
+### Security
+
+- Collection remains read-only and restricted to the explicitly approved tenant
+  and subscription.
+- External subscriptions are referenced but never queried.
+- Only controlled relationship projections enter the evidence document.
+- Query, pagination, schema, or semantic failures cannot publish partial
+  inventory evidence or replace existing evidence.
+- Discovered topology remains `unconfirmed` and grants no permission to reuse,
+  modify, move, replace, or delete Azure resources.
+
 ## [0.7.0] - 2026-09-15
 
 ### Added
@@ -298,7 +338,8 @@ and this project adheres to
   documentation.
 - GitHub issue forms and pull-request template.
 
-[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/RobertAgterhuis/speckit-azure-interview/compare/v0.4.0...v0.5.0

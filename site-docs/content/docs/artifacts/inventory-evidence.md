@@ -225,3 +225,26 @@ bypassed.
 - Do not infer environment or criticality from naming alone.
 - Do not weaken schema validation to accept uncontrolled payloads.
 - Do not commit generated inventory evidence by default.
+
+## Topology evidence
+
+The optional `topology` object supplements the flat resource list with selected
+brownfield relationships. Each record contains:
+
+- `relationshipType`
+- `sourceResourceId`
+- `sourceResourceType`
+- `targetResourceId`
+- `targetResourceType`
+- `targetScope`
+
+The supported scope classifications are `in-scope`,
+`external-subscription`, and `unresolved`. External targets are recorded as
+references only; the collector does not query another subscription.
+
+The six controlled queries are recorded in `source.topologyQueries`. Output is
+normalized, deduplicated, deterministically ordered, schema validated, and
+semantically validated before publication.
+
+Topology evidence does not prove that traffic can flow or that a resource may
+be reused or changed. It remains `unconfirmed` until reconciled with the user.

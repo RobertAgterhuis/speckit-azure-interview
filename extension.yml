@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: "azure-interview"
   name: "Spec Kit Azure Interview"
-  version: "0.7.0"
+  version: "0.8.0"
   description: "Guided Azure architecture discovery before specification"
   author: "Robert Agterhuis"
   repository: "https://github.com/RobertAgterhuis/speckit-azure-interview"
