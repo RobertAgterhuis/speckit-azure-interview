@@ -13,23 +13,47 @@ Run the workflow in this order:
 1. Initialize GitHub Spec Kit.
 2. Install Spec Kit Azure Interview.
 3. Establish the project constitution.
-4. Complete the Azure architecture interview.
-5. Create the specification.
-6. Clarify the specification when required.
-7. Create the implementation plan.
-8. Generate a quality checklist when required.
-9. Generate the tasks.
-10. Analyze specification, plan, and task consistency.
-11. Implement the solution.
-12. Run convergence checks until the implementation is complete.
+4. Optionally collect scoped, read-only Azure inventory evidence.
+5. Complete and confirm the Azure architecture interview.
+6. Generate and review the intended Azure architecture design.
+7. Create the specification.
+8. Clarify the specification when required.
+9. Create the implementation plan.
+10. Generate a quality checklist when required.
+11. Generate the tasks.
+12. Analyze specification, plan, and task consistency.
+13. Implement the approved solution.
+14. Run convergence checks until the implementation is complete.
 
-The Azure interview is intentionally positioned between Constitution and
-Specify:
+The optional inventory command may run before or during the interview:
+
+```text
+speckit.azure-interview.inventory
+```
+
+Inventory evidence remains `unconfirmed` until it is reconciled with the user
+during the Azure interview.
+
+After the interview is complete and `azure-context.json` is confirmed, generate
+the intended design:
+
+```text
+speckit.azure-interview.design
+```
+
+The generated design remains `intended` and `unreviewed` until explicit human
+approval. It must be reviewed before Specify and implementation.
+
+The complete workflow is:
 
 ```text
 Constitution
     ↓
+Azure Inventory Discovery (optional)
+    ↓
 Azure Interview
+    ↓
+Intended Design Review
     ↓
 Specify
     ↓
@@ -47,7 +71,6 @@ Implement
     ↓
 Converge until complete
 ```
-
 ## Optional Azure Inventory Discovery
 
 For brownfield, migration, or extension work, inventory the approved Azure

@@ -591,3 +591,39 @@ def test_release_documentation_describes_intended_design_workflow() -> None:
 
         for statement in required_statements:
             assert statement in content, f"{relative_path} is missing: {statement}"
+
+
+def test_quick_start_places_inventory_and_design_in_workflow_order() -> None:
+    """Inventory and design review must appear in the documented lifecycle."""
+    quick_start = (REPOSITORY_ROOT / "QUICK-START.md").read_text(
+        encoding="utf-8",
+    )
+    diagram_marker = "The complete workflow is:\n\n```text\n"
+    diagram_start = quick_start.index(diagram_marker) + len(diagram_marker)
+    diagram_end = quick_start.index("\n```", diagram_start)
+    workflow = quick_start[diagram_start:diagram_end]
+
+    ordered_stages = [
+        "Constitution",
+        "Azure Inventory Discovery (optional)",
+        "Azure Interview",
+        "Intended Design Review",
+        "Specify",
+        "Clarify (optional)",
+        "Plan",
+        "Checklist (optional)",
+        "Tasks",
+        "Analyze (recommended)",
+        "Implement",
+        "Converge until complete",
+    ]
+
+    positions = [workflow.index(stage) for stage in ordered_stages]
+
+    assert positions == sorted(positions)
+    assert "speckit.azure-interview.inventory" in quick_start
+    assert "speckit.azure-interview.design" in quick_start
+    assert "unconfirmed" in quick_start
+    assert "unreviewed" in quick_start
+    normalized_quick_start = " ".join(quick_start.split())
+    assert "explicit human approval" in normalized_quick_start
