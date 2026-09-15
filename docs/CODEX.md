@@ -114,7 +114,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is installed
@@ -499,6 +499,7 @@ complete design artifact set.
 
 See [Azure Intended Design](AZURE-DESIGN.md) for the full review and safety
 workflow.
+
 ## Review the Intended Azure Design
 
 After generating and inspecting the intended architecture, invoke:

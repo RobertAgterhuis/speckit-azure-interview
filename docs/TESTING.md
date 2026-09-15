@@ -251,7 +251,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 ```
 
 Verify the generated skill:
@@ -344,7 +344,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 ```
 
 Accept the expected external-source warning only after verifying the archive
@@ -648,6 +648,7 @@ A manual smoke test must also verify that:
 
 The smoke test confirms rendering compatibility only. It does not approve the
 design or verify deployed Azure state.
+
 ## Azure Design-Review Tests
 
 The intended-design review implementation is covered by:
@@ -719,3 +720,25 @@ git diff --check
 
 A successful test run does not itself approve an intended design. Approval
 still requires an explicit attributable human decision.
+
+## Brownfield Topology Discovery Tests
+
+Brownfield topology tests verify:
+
+- six fixed relationship types and their endpoint-type contracts;
+- canonical ARM resource IDs and deterministic ordering;
+- relationship deduplication and accurate relationship counts;
+- calculated `in-scope`, `external-subscription`, and `unresolved`
+  classifications;
+- rejection of uncontrolled fields and malformed endpoints;
+- seven separate Resource Graph query flows;
+- Windows-safe single-line KQL arguments for execution through `az.cmd`;
+- pagination integrity, stable total-record counts, and skip-token handling;
+- prevention of partial inventory evidence after any query or validation
+  failure;
+- preservation of existing evidence after a failed explicit overwrite;
+- compatibility with inventory documents that do not contain `topology`.
+
+Live tests require explicit read-only approval and must use an approved
+subscription. They must not display resource IDs, publish evidence into the
+repository, query referenced external subscriptions, or modify Azure resources.

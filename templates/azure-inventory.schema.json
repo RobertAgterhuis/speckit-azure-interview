@@ -47,6 +47,20 @@
         "query": {
           "type": "string",
           "minLength": 1
+        },
+        "topologyQuery": {
+          "type": "string",
+          "minLength": 1
+        },
+        "topologyQueries": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -82,9 +96,80 @@
       "items": {
         "$ref": "#/$defs/resource"
       }
+    },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationshipCount",
+        "relationships"
+      ],
+      "properties": {
+        "relationshipCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/topologyRelationship"
+          }
+        }
+      }
     }
   },
   "$defs": {
+    "topologyRelationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationshipType",
+        "sourceResourceId",
+        "sourceResourceType",
+        "targetResourceId",
+        "targetResourceType",
+        "targetScope"
+      ],
+      "properties": {
+        "relationshipType": {
+          "enum": [
+            "vnet-contains-subnet",
+            "vnet-peered-with-vnet",
+            "subnet-associated-with-nsg",
+            "subnet-associated-with-route-table",
+            "private-endpoint-placed-in-subnet",
+            "private-dns-zone-linked-to-vnet"
+          ]
+        },
+        "sourceResourceId": {
+          "type": "string",
+          "pattern": "^/subscriptions/[0-9a-fA-F-]+/",
+          "minLength": 1
+        },
+        "sourceResourceType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetResourceId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "targetResourceType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetScope": {
+          "enum": [
+            "in-scope",
+            "external-subscription",
+            "unresolved"
+          ]
+        }
+      }
+    },
     "resource": {
       "type": "object",
       "additionalProperties": false,

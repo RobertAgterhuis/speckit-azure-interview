@@ -199,3 +199,20 @@ Report:
 
 Do not declare the Azure architecture interview ready merely because inventory
 collection succeeded.
+
+## Topology Evidence
+
+When topology evidence is present:
+
+1. Report the topology relationship count.
+2. Summarize relationship counts by `relationshipType`.
+3. Summarize targets classified as `in-scope`, `external-subscription`, or
+   `unresolved`.
+4. State that every relationship remains unconfirmed evidence.
+5. Ask the user to verify architectural meaning, ownership, lifecycle intent,
+   and modification boundaries.
+
+Only query the explicitly approved subscription. Record a controlled reference
+when a target is classified as `external-subscription`, but never query a
+referenced external subscription. Do not infer reachability, data flow,
+ownership, permission, or intended reuse from a discovered relationship.

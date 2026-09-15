@@ -162,7 +162,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 Verify the installation:
 
 ```powershell
@@ -324,7 +324,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 ```
 
 Spec Kit generates the project-local skill at:
@@ -628,3 +628,20 @@ See
 [Azure Intended Design Review](docs/AZURE-DESIGN-REVIEW.md)
 for decision rules, examples, digest verification, overwrite protection,
 transactional publication, and troubleshooting.
+
+## Brownfield Topology Discovery
+
+Version 0.8.0 extends the optional Azure inventory with controlled relationship
+evidence. The collector uses six controlled relationship types to describe
+selected parts of the existing brownfield topology without copying arbitrary
+Azure properties.
+
+The collector discovers virtual-network subnet containment, virtual-network
+peerings, subnet associations with network security groups and route tables,
+private-endpoint subnet placement, and Private DNS zone links to virtual
+networks.
+
+Collection remains limited to the explicitly approved subscription. References
+to external subscriptions are referenced but never queried. Every relationship
+remains `unconfirmed` evidence until the user confirms its relevance, ownership,
+lifecycle intent, and architectural interpretation during the interview.

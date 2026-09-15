@@ -222,3 +222,39 @@ bypassed.
 - Do not infer environment or criticality from naming alone.
 - Do not weaken schema validation to accept uncontrolled payloads.
 - Do not commit generated inventory evidence by default.
+
+## Brownfield topology relationships
+
+The optional `topology` object records a deterministic, deduplicated view of
+selected Azure relationships. It contains `relationshipCount` and a
+`relationships` array.
+
+The collector supports these controlled relationship types:
+
+- `vnet-contains-subnet`
+- `vnet-peered-with-vnet`
+- `subnet-associated-with-nsg`
+- `subnet-associated-with-route-table`
+- `private-endpoint-placed-in-subnet`
+- `private-dns-zone-linked-to-vnet`
+
+Every relationship contains a fixed `relationshipType`, `sourceResourceId`,
+`sourceResourceType`, `targetResourceId`, `targetResourceType`, and
+`targetScope`. ARM resource IDs are normalized for deterministic comparison and
+duplicate relationships are removed.
+
+`targetScope` has one of these values:
+
+- `in-scope`: the target belongs to the approved subscription;
+- `external-subscription`: the target references another subscription, which is
+  recorded but never queried;
+- `unresolved`: the target cannot safely be classified from its resource ID.
+
+The `source.topologyQueries` array records the six controlled Resource Graph
+queries used for the collection. The collector executes them as seven separate
+Resource Graph query flows: one resource query and six topology queries. This
+avoids unreliable large union queries and keeps each projection allowlisted.
+
+Topology evidence remains `unconfirmed`. A discovered relationship does not
+prove ownership, intended reuse, lifecycle intent, modification permission,
+connectivity, traffic flow, DNS resolution, or deployment correctness.

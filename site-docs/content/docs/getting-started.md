@@ -22,12 +22,12 @@ Before installing the extension, confirm:
 Install the immutable release archive:
 
     specify extension add azure-interview \
-      --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+      --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 
 On PowerShell:
 
     specify extension add azure-interview `
-        --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
+        --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.8.0.zip
 
 ## Verify the installation
 
