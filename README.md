@@ -34,7 +34,7 @@ This extension adds a discovery and readiness stage without modifying or forking
 - Extend Spec Kit through its supported extension mechanism.
 - Keep Spec Kit Core untouched and independently upgradeable.
 - Support multiple AI integrations.
-- Ask exactly one primary question per response.
+- Ask the first business-purpose question by itself, then use numbered batches of two to four related independent questions.
 - Establish the business purpose before discussing architecture.
 - Adapt questions to the answers already supplied.
 - Never silently invent Azure resource identifiers or requirements.
@@ -162,7 +162,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 Verify the installation:
 
 ```powershell
@@ -282,7 +282,7 @@ The interview must not:
 - Run a deployment.
 - Run an Azure What-If operation.
 - Invent resource identifiers.
-- Ask multiple independent questions in one response.
+- Present unrelated questions or the complete questionnaire in one response.
 - Mark an incomplete interview as ready for specification.
 
 After the interview is complete, validate the generated JSON:
@@ -324,7 +324,7 @@ Install the released extension:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 ```
 
 Spec Kit generates the project-local skill at:
@@ -363,7 +363,7 @@ Community testing is requested for:
 
 - Skill activation
 - Business-purpose-first behavior
-- One primary question per response
+- One isolated business-purpose question followed by adaptive question batches
 - Markdown artifact maintenance
 - Deferred JSON generation
 - Readiness validation

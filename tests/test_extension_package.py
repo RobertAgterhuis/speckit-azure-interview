@@ -261,7 +261,7 @@ def test_command_enforces_business_first_interview_order() -> None:
     )
 
     required_statements = [
-        "Ask exactly one primary question per response.",
+        "Ask the first business-purpose question by itself.",
         "Establish the specific business capability or problem.",
         "Do not ask about criticality, topology, AVM strategy",
         "Create `azure-context.json` only when",
@@ -356,7 +356,7 @@ def test_quick_start_uses_versioned_public_archive() -> None:
     assert (
         "--from "
         "https://github.com/RobertAgterhuis/"
-        "speckit-azure-interview/archive/refs/tags/v0.6.0.zip" in quick_start_content
+        "speckit-azure-interview/archive/refs/tags/v0.7.0.zip" in quick_start_content
     )
 
 
@@ -440,7 +440,7 @@ def test_interview_reconciles_unconfirmed_inventory_evidence() -> None:
         "Treat every inventory record as `unconfirmed`",
         "Never copy inventory evidence automatically",
         "Confirm lifecycle intent",
-        "Confirm modification permission",
+        "Treat modification permission as a protected decision.",
         "source `azure`",
     ]
 
@@ -741,3 +741,407 @@ def test_documentation_describes_explicit_design_review() -> None:
 
         for statement in required_statements:
             assert statement in content, f"{relative_path} is missing: {statement}"
+
+
+def test_interview_command_uses_adaptive_question_batches() -> None:
+    """The interview must collect related independent answers efficiently."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        "Ask the first business-purpose question by itself.",
+        ("Ask two to four closely related, independent questions as a numbered batch."),
+        "Never include more than four primary questions in one response.",
+        ("Keep dependent questions separate when an earlier answer can change the later question."),
+        ("Accept partial batch answers and continue only with the unanswered relevant questions."),
+        ("Treat `unknown`, `TBD`, `not applicable`, and `use existing` as valid explicit answers."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_generalizes_scoped_answers() -> None:
+    """Explicit scope-wide answers must prevent repetitive questions."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        ("Apply an explicitly scoped answer to every applicable resource or topic."),
+        (
+            "Do not ask the same ownership, reuse, or immutability "
+            "question again for resources covered by that scope."
+        ),
+        ("Record the scope rule and preserve any explicitly stated exceptions."),
+        ("Ask for clarification instead of generalizing when the scope is ambiguous."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_protects_sensitive_decisions() -> None:
+    """High-impact decisions must remain isolated from ordinary batches."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        (
+            "Ask approval, consent, security, destructive-action, and "
+            "overwrite questions individually."
+        ),
+        ("Never infer approval or authorization from a batch answer or a scope-wide answer."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_requires_validated_handoff_artifacts() -> None:
+    """Completion requires synchronized and validated Markdown and JSON."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        (
+            "Generate both `azure-context.md` and `azure-context.json` "
+            "before declaring the interview complete."
+        ),
+        ("Validate `azure-context.json` before setting `readyForSpecification` to `true`."),
+        (
+            "Do not recommend specification or design generation while "
+            "a blocking question remains or JSON validation fails."
+        ),
+        ("Publish Markdown and JSON from the same confirmed interview state."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_removes_obsolete_single_question_contract() -> None:
+    """The former unconditional single-question rule must be removed."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    obsolete_contracts = [
+        "Ask exactly one primary question per response.",
+        ("Never combine independent decisions in one question, questionnaire, form, or"),
+        ("End every response with exactly one next question or one explicit request"),
+    ]
+
+    for contract in obsolete_contracts:
+        assert contract not in content
+
+
+def test_interview_command_defines_deterministic_batch_planning() -> None:
+    """Question batches must be selected through explicit ordered rules."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        "## Batch Planning Algorithm",
+        "Build the candidate-question set from the earliest incomplete phase.",
+        ("Remove questions answered by confirmed facts, scope rules, or applicable evidence."),
+        ("Remove questions made irrelevant by earlier answers and record why they were skipped."),
+        ("Select only questions that can be answered independently in the current state."),
+        ("Select questions from one topic cluster only and preserve their documented order."),
+        ("Stop adding questions when the batch contains four questions."),
+        (
+            "After processing the answers, recompute the candidate set "
+            "instead of using a precomputed questionnaire."
+        ),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_defines_question_clusters() -> None:
+    """The command must provide bounded clusters for related questions."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_clusters = [
+        "### Workload foundation cluster",
+        "### Azure estate and placement cluster",
+        "### Existing-resource boundaries cluster",
+        "### Network and private-connectivity cluster",
+        "### Governance and operations cluster",
+    ]
+
+    for cluster in required_clusters:
+        assert cluster in content
+
+
+def test_interview_command_defines_batch_response_protocol() -> None:
+    """Users must be able to answer batches clearly and partially."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        "## Batch Response Protocol",
+        "Give every question a stable question ID.",
+        "Number questions from 1 through the batch size.",
+        (
+            "Tell the user that answers may be provided by number "
+            "and that unanswered numbers remain open."
+        ),
+        ("Map each supplied answer to its question ID before updating interview state."),
+        (
+            "Do not reinterpret one answer as applying to another "
+            "question unless the user explicitly scopes it."
+        ),
+        ("Acknowledge the accepted answers once, then ask only the next relevant batch."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_prevents_batching_across_boundaries() -> None:
+    """Question grouping must not cross phase or decision boundaries."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        ("Do not combine questions from different interview phases in one batch."),
+        ("Do not include a phase-confirmation request in a question batch."),
+        ("Do not include a protected decision in an ordinary question batch."),
+        ("Do not batch a question with its possible follow-up question."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_defines_ordered_completion_transaction() -> None:
+    """The final context artifacts must be published in a safe order."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        "## Completion Transaction",
+        ("Build one canonical final context state only after the user confirms the final summary."),
+        ("Render candidate Markdown and JSON from that same canonical state."),
+        ("Write both candidates to temporary files in their destination directory."),
+        ("Validate the candidate JSON against the packaged schema and semantic validator."),
+        ("Publish both final artifacts only after candidate validation succeeds."),
+        (
+            "Validate the persisted JSON again after publication "
+            "before providing handoff instructions."
+        ),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_keeps_failed_completion_in_progress() -> None:
+    """A failed completion transaction must never produce false readiness."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        ("If candidate rendering or validation fails, do not publish either candidate."),
+        ("Keep the interview status `In Progress` or `Blocked` and keep readiness set to `No`."),
+        (
+            "Do not leave `azure-context.md` claiming completion "
+            "when `azure-context.json` is absent or invalid."
+        ),
+        ("Never ask a downstream command to construct or repair the interview context."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_command_verifies_synchronized_final_state() -> None:
+    """Published artifacts must describe one identical readiness state."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        ("Confirm that persisted Markdown and JSON both report a complete interview."),
+        ("Confirm that persisted Markdown and JSON both report readiness for specification."),
+        ("Confirm that the persisted blocking-question and critical-assumption counts are zero."),
+        (
+            "Provide specification and design handoff instructions "
+            "only after all post-publication checks succeed."
+        ),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_interview_phase_one_switches_to_batches_after_business_purpose() -> None:
+    """Phase 1 must isolate purpose and then batch independent details."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        ("Ask only the business-purpose question while the purpose is missing or vague."),
+        (
+            "After the business purpose is confirmed, use the Workload "
+            "foundation cluster for independent Phase 1 questions."
+        ),
+        (
+            "Do not treat the documented Phase 1 order as a requirement "
+            "to ask every item in a separate response."
+        ),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_existing_resource_phase_uses_safe_scope_defaults() -> None:
+    """Brownfield discovery must avoid repetitive resource-by-resource prompts."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        (
+            "Ask for scope-wide ownership, reuse, and immutability "
+            "rules before asking resource-specific questions."
+        ),
+        (
+            "Apply the safe default that an existing resource remains "
+            "unmodified unless the user explicitly authorizes an exception."
+        ),
+        ("Ask only about resources or fields not covered by a confirmed scope rule."),
+        ("Handle each requested modification exception as an isolated protected decision."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_inventory_reconciliation_supports_bulk_confirmation() -> None:
+    """Inventory evidence must support explicit scoped confirmation."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        (
+            "Allow the user to confirm one proposed interpretation "
+            "for an explicitly listed group of inventory resources."
+        ),
+        (
+            "Record one scope rule plus resource-specific exceptions "
+            "instead of duplicating identical answers."
+        ),
+        ("Do not treat grouped confirmation as permission to modify any existing resource."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_review_phase_delegates_to_completion_transaction() -> None:
+    """Phase 13 must use the single authoritative completion workflow."""
+    command_path = REPOSITORY_ROOT / "commands" / "azure-interview.md"
+    content = command_path.read_text(encoding="utf-8")
+
+    required_contracts = [
+        (
+            "After summary confirmation, execute the Completion "
+            "Transaction; do not implement a separate Phase 13 "
+            "publication flow."
+        ),
+        ("Keep the blocking-question set synchronized with the recomputed candidate-question set."),
+    ]
+
+    for contract in required_contracts:
+        assert contract in content
+
+
+def test_release_documentation_describes_adaptive_interview_batches() -> None:
+    """Public documentation must describe the smarter interview behavior."""
+    required_statements = {
+        "README.md": [
+            "Ask the first business-purpose question by itself",
+            "numbered batches of two to four related independent questions",
+        ],
+        "CONTRIBUTING.md": [
+            "first business-purpose question is isolated",
+            "no more than four related questions",
+        ],
+        "docs/CODEX.md": [
+            "opening business-purpose question first",
+            "numbered batch of two to four related questions",
+            "unanswered numbers remain open",
+        ],
+        "docs/COPILOT.md": [
+            "isolating the first business-purpose question",
+            "adaptive numbered batches",
+            "unanswered numbers remain open",
+        ],
+        "docs/TESTING.md": [
+            "business-purpose question separately",
+            "numbered batches of two to four related questions",
+        ],
+        "site-docs/content/docs/commands/interview.md": [
+            "Ask the first business-purpose question by itself",
+            "two to four closely related",
+            "Accept partial batch answers",
+        ],
+    }
+
+    obsolete_statements = [
+        "Ask exactly one primary question per response",
+        "Answer one question at a time",
+        "Answer one primary question at a time",
+        "Asks only one primary question per response",
+        "Confirm exactly one primary question is asked",
+    ]
+
+    for relative_path, statements in required_statements.items():
+        content = (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
+
+        for statement in statements:
+            assert statement in content
+
+        for statement in obsolete_statements:
+            assert statement not in content
+
+
+def test_quick_start_and_site_explain_adaptive_batch_answers() -> None:
+    """Operator documentation must show how adaptive batches are answered."""
+    required_statements = {
+        "QUICK-START.md": [
+            "### Answer Adaptive Question Batches",
+            "Existing-resource boundaries",
+            "A partial response is valid:",
+            "The Platform Team owns all Azure resources.",
+            "remains a protected decision",
+        ],
+        "site-docs/content/docs/workflow.md": [
+            "## Adaptive interview batches",
+            "two to four closely",
+            "related, independent questions",
+            "recomputes the next applicable questions",
+            "isolated protected decisions",
+            "passes schema and semantic validation",
+        ],
+        "site-docs/content/docs/commands/interview.md": [
+            "## Batch Planning Algorithm",
+            "## Question Clusters",
+            "## Batch Response Protocol",
+            "## Completion Transaction",
+        ],
+    }
+
+    for relative_path, statements in required_statements.items():
+        content = (REPOSITORY_ROOT / relative_path).read_text(encoding="utf-8")
+
+        for statement in statements:
+            assert " ".join(statement.split()) in " ".join(content.split())
+
+    site_interview = (REPOSITORY_ROOT / "site-docs/content/docs/commands/interview.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "End every response with exactly one next question" not in site_interview
+    assert "Ask exactly one primary question per response" not in site_interview

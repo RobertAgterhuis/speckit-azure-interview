@@ -265,11 +265,11 @@ review the affected files before using `--force`.
 
 ## 5. Install Spec Kit Azure Interview
 
-Install the immutable `v0.6.0` release archive:
+Install the immutable `v0.7.0` release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is not yet
@@ -291,7 +291,7 @@ specify extension info azure-interview
 Expected extension:
 
 ```text
-Spec Kit Azure Interview (v0.6.0)
+Spec Kit Azure Interview (v0.7.0)
 ```
 
 Expected command:
@@ -499,6 +499,42 @@ The interview records:
 - Decisions
 - Assumptions
 - Open questions
+
+### Answer Adaptive Question Batches
+
+The first business-purpose question is asked separately. After the purpose is
+clear, the interview groups two to four closely related, independent questions.
+
+For example:
+
+```text
+Existing-resource boundaries
+
+1. [OQ-024] Which listed resources must be reused?
+2. [OQ-025] Which team owns these Azure resources?
+3. [OQ-026] Must the existing resources remain unmodified?
+4. [OQ-027] Are there named exceptions to that immutability rule?
+
+Answer by number. You may leave a number unanswered or use:
+unknown, TBD, not applicable, or use existing.
+```
+
+A partial response is valid:
+
+```text
+1. Use existing for all listed resources.
+3. Yes, keep them unmodified.
+4. Only the Web App configuration may change for the WebJob integration.
+
+The Platform Team owns all Azure resources.
+```
+
+The scope-wide ownership answer applies to all Azure resources in the stated
+scope. The unanswered question remains open only when it is not already covered
+by another explicit answer.
+
+Permission to modify an existing resource remains a protected decision. A
+general ownership or reuse answer does not grant modification permission.
 
 ## 10. Verify Interview Readiness
 
@@ -805,7 +841,7 @@ Correct:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 ```
 
 The `--from` value must point to a ZIP, tar.gz, or tgz archive.

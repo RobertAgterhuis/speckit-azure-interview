@@ -114,7 +114,7 @@ Install the immutable release archive:
 
 ```powershell
 specify extension add azure-interview `
-    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.6.0.zip
+    --from https://github.com/RobertAgterhuis/speckit-azure-interview/archive/refs/tags/v0.7.0.zip
 ```
 
 Spec Kit displays an untrusted-source warning because the extension is installed
@@ -296,7 +296,9 @@ approval merely to remove prompts.
 
 ## Continue the Interview
 
-Answer one question at a time.
+Answer the opening business-purpose question first. Later responses may answer
+a numbered batch of two to four related questions. Partial answers are allowed;
+unanswered numbers remain open.
 
 Codex should continuously update:
 

@@ -146,7 +146,7 @@ When changing `commands/azure-interview.md`:
 2. Add or update an automated safeguard test.
 3. Test a new interview.
 4. Test resume behaviour.
-5. Confirm exactly one primary question is asked.
+5. Confirm the first business-purpose question is isolated and later batches contain no more than four related questions.
 6. Confirm business purpose remains the first unresolved topic.
 7. Confirm no Azure writes or IaC generation occur.
 8. Confirm the JSON handoff is not created prematurely.
